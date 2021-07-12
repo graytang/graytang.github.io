@@ -175,15 +175,11 @@ body {
   height: 100%;
 }
 body {
-  background: url("/images/background.jpg");
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  background-size: cover;
+  background: var(--body-bg-color);
   color: var(--text-color);
   font-family: 'Lato', "PingFang SC", "Microsoft YaHei", sans-serif;
   font-size: 1em;
   line-height: 2;
-  opcity: 0.9;
 }
 @media (max-width: 991px) {
   body {
@@ -1249,7 +1245,7 @@ pre .javascript .function {
 }
 .links-of-author a::before,
 .links-of-author span.exturl::before {
-  background: #ff2039;
+  background: #8777ff;
   border-radius: 50%;
   content: ' ';
   display: inline-block;
@@ -2759,6 +2755,12 @@ mjx-container + br {
   .pagination {
     margin: 8px 0 0;
   }
+}
+body {
+  background: url("/images/background.jpg");
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  background-size: cover;
 }
 .content-wrap {
   background: rgba(255,255,255,0.1) none repeat scroll !important;
