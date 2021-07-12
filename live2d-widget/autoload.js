@@ -8,7 +8,7 @@ const live2d_path = "/live2d-widget/";
 // 2-35 水蓝睡衣; 2-39 白色水手服泳装;  2-45 圣诞丝带装; 2-46 绿色比基尼; 
 // 6-3 涅普顿圣诞服; 6-5 涅普顿泳装; 6-8 黑心圣诞服; 6-9 黑心泳装; 
 localStorage.setItem('modelId', '2');
-localStorage.setItem('modelTexturesId', '45');
+localStorage.setItem('modelTexturesId', '4');
 
 // 封装异步加载资源的方法
 function loadExternalResource(url, type) {
