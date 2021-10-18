@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"hazykam.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"manual","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+
+<script src="//cdn.bootcss.com/pace/1.0.2/pace.min.js"></script>
+<link href="//cdn.bootcss.com/pace/1.0.2/themes/pink/pace-theme-flash.css" rel="stylesheet">
+
+<style>
+    .pace .pace-progress {
+        background: #1E92FB; /*进度条颜色*/
+        height: 3px;
+    }
+    .pace .pace-progress-inner {
+         box-shadow: 0 0 10px #1E92FB, 0 0 5px     #1E92FB; /*阴影颜色*/
+    }
+    .pace .pace-activity {
+        border-top-color: #1E92FB;    /*上边框颜色*/
+        border-left-color: #1E92FB;    /*左边框颜色*/
+    }
+</style>
+  <meta name="description" content="线程生命周期 线程通常有五种状态：创建、就绪、运行、阻塞、死亡。 阻塞的情况又分为三种： 等待阻塞：运行的线程执行了wait犯法，该线程会释放占用的所有资源，JVM会把该线程放入“等待池”中。进入了等待阻塞后无法自动唤醒，必须依靠其他线程调用notify或notifyAll方法才能被唤醒，wait方法是object类的方法。 同步阻塞：运行的线程在获取对象的同步锁时，若该同步锁被别的线程占用，则J">
+<meta property="og:type" content="article">
+<meta property="og:title" content="线程">
+<meta property="og:url" content="https://hazykam.github.io/2021/10/18/%E7%BA%BF%E7%A8%8B/index.html">
+<meta property="og:site_name" content="hazy&#39;s world">
+<meta property="og:description" content="线程生命周期 线程通常有五种状态：创建、就绪、运行、阻塞、死亡。 阻塞的情况又分为三种： 等待阻塞：运行的线程执行了wait犯法，该线程会释放占用的所有资源，JVM会把该线程放入“等待池”中。进入了等待阻塞后无法自动唤醒，必须依靠其他线程调用notify或notifyAll方法才能被唤醒，wait方法是object类的方法。 同步阻塞：运行的线程在获取对象的同步锁时，若该同步锁被别的线程占用，则J">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-10-18T09:12:37.000Z">
+<meta property="article:modified_time" content="2021-10-18T09:49:20.187Z">
+<meta property="article:author" content="幻胧">
+<meta property="article:tag" content="线程">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://hazykam.github.io/2021/10/18/%E7%BA%BF%E7%A8%8B/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>线程 | hazy's world</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+
+  <!-- live2d的依赖css和js，将其注释可以关闭live2d -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome/css/font-awesome.min.css"/>
+  <script src="/live2d-widget/autoload.js"></script>
+<link rel="alternate" href="/atom.xml" title="hazy's world" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">hazy's world</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">但愿长醉不复醒</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://hazykam.github.io/2021/10/18/%E7%BA%BF%E7%A8%8B/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars.githubusercontent.com/u/81507746?v=4">
+      <meta itemprop="name" content="幻胧">
+      <meta itemprop="description" content="echo 'Set free'">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="hazy's world">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          线程
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-10-18 17:12:37 / 修改时间：17:49:20" itemprop="dateCreated datePublished" datetime="2021-10-18T17:12:37+08:00">2021-10-18</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">学习笔记</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="线程"><a href="#线程" class="headerlink" title="线程"></a>线程</h3><h4 id="生命周期"><a href="#生命周期" class="headerlink" title="生命周期"></a>生命周期</h4><ol>
+<li>线程通常有五种状态：创建、就绪、运行、阻塞、死亡。</li>
+<li>阻塞的情况又分为三种：<ol>
+<li>等待阻塞：运行的线程执行了wait犯法，该线程会释放占用的所有资源，JVM会把该线程放入“等待池”中。进入了等待阻塞后无法自动唤醒，必须依靠其他线程调用notify或notifyAll方法才能被唤醒，wait方法是object类的方法。</li>
+<li>同步阻塞：运行的线程在获取对象的同步锁时，若该同步锁被别的线程占用，则JVM会把该线程放入“锁池”中。</li>
+<li>其他阻塞：运行的线程执行了sleep或join方法，或发出了I/O请求时，JVM会把该线程置为阻塞状态。当sleep超时、join等待线程终止或者超时、或者I/O处理完毕时，线程重新转入就绪状态，sleep时Thread类的方法。</li>
+</ol>
+</li>
+</ol>
+<h4 id="sleep、wait、join、yield"><a href="#sleep、wait、join、yield" class="headerlink" title="sleep、wait、join、yield"></a>sleep、wait、join、yield</h4><p><strong>锁池</strong></p>
+<p>所有需要竞争同步锁的线程都会放在锁池当中。</p>
+<p>比如当前对象的锁已经被其中一个线程得到，则其他线程需要在这个锁池进行等待，直到持有锁的线程释放了同步锁后，锁池中的线程才可以去竞争同步锁，当某个线程得到锁后会进入就绪队列等待CPU调度。</p>
+<p><strong>等待池</strong></p>
+<p>调用wait方法后，线程会被放入等待池中。</p>
+<p>等待池的线程不会去竞争同步锁，只有在调用了notify或notifyAll方法后，等待池的线程才会开始竞争锁，notify时随机从等待池中选出一个线程放到锁池，而notifyAll则会将等待池中所有的线程都放入锁池中。</p>
+<p><strong>sleep和wait的区别</strong></p>
+<ol>
+<li>sleep是Thread类的静态本地方法，wait是Object类的本地方法。</li>
+<li>sleep方法不会释放锁，但是wait会将锁释放，并且将线程加入到等待池（等待队列）中。</li>
+<li>sleep方法不依赖synchronized，但是wait需要。</li>
+<li>sleep不需要被主动唤醒（当休眠结束后退出阻塞），但是wait需要（当没有指定时间时）。</li>
+<li>sleep一般用于当前线程的休眠，或者轮询暂停操作，wait则多用于多线程之间的通信。</li>
+<li>sleep会让出CPU且强制切换上下文，wait则不一定，wait后还是可能有机会重新竞争到锁继续执行。</li>
+</ol>
+<p><strong>yield</strong>执行后线程会立刻释放CPU进入就绪状态，但是依然保留了CPU的执行资格，所以有可能CPU下次进行线程调度还是会让这个线程获取到CPU继续执行。</p>
+<p><strong>join</strong>可以让线程执行插队的操作，例如在线程B的代码块中调用了线程A的join方法，线程B就会进入到阻塞队列，直到线程A运行结束或中断线程。</p>
+<h4 id="线程安全"><a href="#线程安全" class="headerlink" title="线程安全"></a>线程安全</h4><p>线程安全实际上指的是堆的内存安全，堆是进程和线程的共享内存，可以被进程中的所有线程访问。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">当多个线程访问同一个对象时，如果不进行额外的同步控制或其他的协调操作，调用这个对象之后依然可以获得正确的结果，我们就可以说这个对象是线程安全的。</span><br></pre></td></tr></table></figure>
+
+<h4 id="守护线程"><a href="#守护线程" class="headerlink" title="守护线程"></a>守护线程</h4><p>为所有非守护线程（即用户线程）提供服务的线程；任何一个守护线程都会为整个JVM中所有的用户线程服务。</p>
+<p>守护线程依赖整个进程而运行，如果所有线程都结束运行了，守护线程会直接中断。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">由于守护线程的终止是无法自身控制的，因此不可以把IO、File之类的访问固有资源和事务处理等逻辑分配给它。</span><br></pre></td></tr></table></figure>
+
+<p>举例，<strong>GC垃圾回收线程</strong>：GC就是一个经典的守护线程，当程序中不再有任何运行的用户线程，程序就不会再产生垃圾，垃圾回收器也就没事干了，所以当GC是JVM上仅剩的线程时，GC会自动中断。它始终在低级别的状态中运行，用于实时监控和管理系统中的可回收资源。</p>
+<p>应用场景：</p>
+<ol>
+<li>为其他线程提供服务支持</li>
+<li>在任何情况下，程序结束时，这个线程立刻关闭也不会出现错误的结果，就可以作为守护线程；如果该线程必须被正确的关闭，否则会出现错误的结果，那这个线程一定不能是守护线程，而是用户线程</li>
+</ol>
+<p>thread.setDaemon(true)必须在thread.start()之前设置，如果将正在运行的用户线程设为守护线程则会抛出异常。</p>
+<p>在守护线程中产生的新线程也是守护线程。</p>
+<h4 id="并发的三大特性"><a href="#并发的三大特性" class="headerlink" title="并发的三大特性"></a>并发的三大特性</h4><p>关键字：synchronized、CAS、volatile</p>
+<ul>
+<li>原子性</li>
+</ul>
+<p>原子性是指在执行某部分代码时，cpu不可以被中断切换调度，只有全部执行完成和完全不执行两个结果。</p>
+<ul>
+<li>可见性</li>
+</ul>
+<p>当多个线程访问同一个共享变量时，一个线程修改了这个变量的值，其他线程都能立刻看到变量修改后的值。</p>
+<ul>
+<li>有序性</li>
+</ul>
+<p>JVM为了优化执行效率，会在运行时一定程度上进行指令的重排序，如果在多线程的环境下发生指令重排，可能会导致执行的结果错误，这种情况就需要禁止指令重排以保证执行的有序性。</p>
+<h4 id="线程池特性"><a href="#线程池特性" class="headerlink" title="线程池特性"></a>线程池特性</h4><ol>
+<li>降低资源消耗；提高线程利用率，降低创建和销毁线程的开支</li>
+<li>提高响应速度；当有任务进入时，线程池中的线程可以直接执行，不需要创建线程</li>
+<li>提高线程的可管理性；线程是稀缺资源，使用线程池可以统一分配调优监控</li>
+</ol>
+<h4 id="线程池参数"><a href="#线程池参数" class="headerlink" title="线程池参数"></a>线程池参数</h4><p><code>corePoolSize</code> 池中核心线程的数量；即正常情况下会创建的线程数，这些线程创建后不会销毁，而是常驻在线程池中。</p>
+<p><code>maxinumPoolSize</code> 池中可容纳线程的最大数量；如果当前任务较多，核心线程正忙且任务队列已满时，此时就会创建新的线程，池中线程总数不会超过这个值。</p>
+<p><code>keepAliveTime</code> 核心线程以外的线程空闲存活时间；除核心线程以外的线程，当空闲时间达到这个值时，线程将会被销毁，可以通过<code>setKeepAliveTime</code>方法来设置空闲时间。</p>
+<p><code>workQueue</code> 存放待执行任务的队列；当核心线程正忙时，如果有新任务进入时则会放入该队列，直到队列已满但还有新任务在持续进入时，则会开始创建新的线程。</p>
+<p><code>ThreadFactory</code> 创建线程执行任务的工厂；可以使用默认的创建工厂，产生的线程都在同一个组内，拥有相同的优先级，且都不为守护线程。也可以选择自定义线程工厂，一般会根据业务来制定自定义的线程工厂。</p>
+<p><code>Handler</code> 任务拒绝策略；有两种情况，第一种是调用<code>shutdown</code>等方法关闭线程池后，这时即时线程池内部还有没执行完的任务正在执行，但由于线程池已经关闭，向线程池提交的任务就会被拒绝。第二种则是当池中线程达到最大线程数时，线程池已经没有能力继续处理新提交的任务时，就会拒绝任务。</p>
+<h4 id="线程池中阻塞队列的作用"><a href="#线程池中阻塞队列的作用" class="headerlink" title="线程池中阻塞队列的作用"></a>线程池中阻塞队列的作用</h4><ol>
+<li><p>一般的队列只能保证一个有限长度的缓冲区，如果超出了缓冲区长度，就无法保留新进入的任务，而阻塞队列会通过阻塞将继续入队的任务保留。</p>
+</li>
+<li><p>阻塞队列拥有自动阻塞和唤醒的功能，不需要额外管理，当池中的核心线程没有任务可执行时，线程池会利用阻塞队列的<code>take</code>方法将核心线程挂起，使其进入wait状态，这样既维持了核心线程的存活，也释放了CPU资源。</p>
+</li>
+</ol>
+<h5 id="为什么先加入队列而不是先创建线程执行？"><a href="#为什么先加入队列而不是先创建线程执行？" class="headerlink" title="为什么先加入队列而不是先创建线程执行？"></a>为什么先加入队列而不是先创建线程执行？</h5><p>在创建新的线程时，需要获取全局锁，这个时候其他的线程就会被阻塞，影响了整体效率；</p>
+<p>当任务数量没有超过任务队列的大小时，核心线程通常可以正常执行任务，如果使用先创建线程执行的策略，在执行任务的过程中可能会使临时线程频繁地被创建和销毁，引起效率的降低。</p>
+<h4 id="线程池-线程复用原理"><a href="#线程池-线程复用原理" class="headerlink" title="线程池 - 线程复用原理"></a>线程池 - 线程复用原理</h4><p>线程池会将线程和任务解耦，使其不绑定在一起，摆脱了通过Thread创建线程时一个线程必须对应一个任务的限制。</p>
+<p>在线程池中，同一个线程可以从阻塞队列中不断获取新任务来执行，其核心原理在于线程池对Thread进行了封装，当任务被执行时不会通过 <code>Thread.start()</code> 来创建新线程，而是让池中的每个线程执行一个“循环任务”，在“循环任务”中不停检查是否有任务需要被执行，如果有则直接调用任务中的 <code>run()</code> 将其当成一个普通的方法执行。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E7%BA%BF%E7%A8%8B/" rel="tag">
+                <i class="fa fa-tag"></i> 线程
+              </a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/10/18/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/" rel="prev" title="数据结构">
+      <i class="fa fa-chevron-left"></i> 数据结构
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/10/18/%E9%94%81/" rel="next" title="锁">
+      锁 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B"><span class="nav-text">线程</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F"><span class="nav-text">生命周期</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#sleep%E3%80%81wait%E3%80%81join%E3%80%81yield"><span class="nav-text">sleep、wait、join、yield</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8"><span class="nav-text">线程安全</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%88%E6%8A%A4%E7%BA%BF%E7%A8%8B"><span class="nav-text">守护线程</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%B9%B6%E5%8F%91%E7%9A%84%E4%B8%89%E5%A4%A7%E7%89%B9%E6%80%A7"><span class="nav-text">并发的三大特性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E6%B1%A0%E7%89%B9%E6%80%A7"><span class="nav-text">线程池特性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E6%B1%A0%E5%8F%82%E6%95%B0"><span class="nav-text">线程池参数</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E6%B1%A0%E4%B8%AD%E9%98%BB%E5%A1%9E%E9%98%9F%E5%88%97%E7%9A%84%E4%BD%9C%E7%94%A8"><span class="nav-text">线程池中阻塞队列的作用</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E5%85%88%E5%8A%A0%E5%85%A5%E9%98%9F%E5%88%97%E8%80%8C%E4%B8%8D%E6%98%AF%E5%85%88%E5%88%9B%E5%BB%BA%E7%BA%BF%E7%A8%8B%E6%89%A7%E8%A1%8C%EF%BC%9F"><span class="nav-text">为什么先加入队列而不是先创建线程执行？</span></a></li></ol></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BA%BF%E7%A8%8B%E6%B1%A0-%E7%BA%BF%E7%A8%8B%E5%A4%8D%E7%94%A8%E5%8E%9F%E7%90%86"><span class="nav-text">线程池 - 线程复用原理</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="幻胧"
+      src="https://avatars.githubusercontent.com/u/81507746?v=4">
+  <p class="site-author-name" itemprop="name">幻胧</p>
+  <div class="site-description" itemprop="description">echo 'Set free'</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hazyKam" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hazyKam" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:hazykam@qq.com" title="E-Mail → mailto:hazykam@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fas fa-yin-yang"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">幻胧</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+
+</body>
+</html>

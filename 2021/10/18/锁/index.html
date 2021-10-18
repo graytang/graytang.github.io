@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"hazykam.github.io","root":"/","scheme":"Gemini","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":true,"show_result":true,"style":"mac"},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":true,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"manual","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+
+<script src="//cdn.bootcss.com/pace/1.0.2/pace.min.js"></script>
+<link href="//cdn.bootcss.com/pace/1.0.2/themes/pink/pace-theme-flash.css" rel="stylesheet">
+
+<style>
+    .pace .pace-progress {
+        background: #1E92FB; /*进度条颜色*/
+        height: 3px;
+    }
+    .pace .pace-progress-inner {
+         box-shadow: 0 0 10px #1E92FB, 0 0 5px     #1E92FB; /*阴影颜色*/
+    }
+    .pace .pace-activity {
+        border-top-color: #1E92FB;    /*上边框颜色*/
+        border-left-color: #1E92FB;    /*左边框颜色*/
+    }
+</style>
+  <meta name="description" content="锁机制锁的四种状态：无锁、偏向锁、轻量级锁、重量级锁 悲观锁悲观锁在调用资源时，会悲观的认为所有访问该资源的线程都会对其进行修改，因此需要严格同步线程的调用，在操作数据时会直接把资源锁住，只让一个线程进行调用，直到操作完成后再释放锁，上锁期间其他线程无法修改资源； 互斥锁就是悲观锁的一种，Java中的synchronized就是互斥锁； 但在有些场景下，可能多个线程对某个资源的调用大部分都是读取操">
+<meta property="og:type" content="article">
+<meta property="og:title" content="锁">
+<meta property="og:url" content="https://hazykam.github.io/2021/10/18/%E9%94%81/index.html">
+<meta property="og:site_name" content="hazy&#39;s world">
+<meta property="og:description" content="锁机制锁的四种状态：无锁、偏向锁、轻量级锁、重量级锁 悲观锁悲观锁在调用资源时，会悲观的认为所有访问该资源的线程都会对其进行修改，因此需要严格同步线程的调用，在操作数据时会直接把资源锁住，只让一个线程进行调用，直到操作完成后再释放锁，上锁期间其他线程无法修改资源； 互斥锁就是悲观锁的一种，Java中的synchronized就是互斥锁； 但在有些场景下，可能多个线程对某个资源的调用大部分都是读取操">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-10-18T09:14:17.000Z">
+<meta property="article:modified_time" content="2021-10-18T09:48:55.924Z">
+<meta property="article:author" content="幻胧">
+<meta property="article:tag" content="锁">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://hazykam.github.io/2021/10/18/%E9%94%81/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>锁 | hazy's world</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+
+  <!-- live2d的依赖css和js，将其注释可以关闭live2d -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/font-awesome/css/font-awesome.min.css"/>
+  <script src="/live2d-widget/autoload.js"></script>
+<link rel="alternate" href="/atom.xml" title="hazy's world" type="application/atom+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">hazy's world</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">但愿长醉不复醒</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签</a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+  <a role="button" class="book-mark-link book-mark-link-fixed"></a>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://hazykam.github.io/2021/10/18/%E9%94%81/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://avatars.githubusercontent.com/u/81507746?v=4">
+      <meta itemprop="name" content="幻胧">
+      <meta itemprop="description" content="echo 'Set free'">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="hazy's world">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          锁
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-10-18 17:14:17 / 修改时间：17:48:55" itemprop="dateCreated datePublished" datetime="2021-10-18T17:14:17+08:00">2021-10-18</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/" itemprop="url" rel="index"><span itemprop="name">学习笔记</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h3 id="锁机制"><a href="#锁机制" class="headerlink" title="锁机制"></a>锁机制</h3><p>锁的四种状态：无锁、偏向锁、轻量级锁、重量级锁</p>
+<h4 id="悲观锁"><a href="#悲观锁" class="headerlink" title="悲观锁"></a>悲观锁</h4><p>悲观锁在调用资源时，会悲观的认为所有访问该资源的线程都会对其进行修改，因此需要严格同步线程的调用，在操作数据时会直接把资源锁住，只让一个线程进行调用，直到操作完成后再释放锁，上锁期间其他线程无法修改资源；</p>
+<p>互斥锁就是悲观锁的一种，Java中的synchronized就是互斥锁；</p>
+<p>但在有些场景下，可能多个线程对某个资源的调用大部分都是读取操作，就没有必要每次调用时都对资源进行锁定；</p>
+<p>而因为线程的切换是会产生操作系统用户态与内核态的切换的，所以有时同步代码块执行的耗时可能会远远小于线程切换的耗时，这就有点本末倒置了。</p>
+<h4 id="乐观锁"><a href="#乐观锁" class="headerlink" title="乐观锁"></a>乐观锁</h4><p>乐观锁在调用资源时非常乐观，认为访问该资源的线程都不会对其进行修改，因此乐观锁其实是一种不会锁定资源的思想。</p>
+<h4 id="CAS（Compare-and-Swap）"><a href="#CAS（Compare-and-Swap）" class="headerlink" title="CAS（Compare and Swap）"></a>CAS（Compare and Swap）</h4><p>CAS（Compare and Swap）比较并交换是乐观锁的实现，是一种非阻塞的同步机制；</p>
+<p>当多个线程同时访问一个资源时，每个线程都会产生三个操作数：</p>
+<ul>
+<li>调用的资源的内存位置（V）</li>
+<li>资源未修改前原本的值（A）</li>
+<li>需要写入的新值（B）</li>
+</ul>
+<p>线程会比较得到的值是否和指定位置资源的值一致，如果一致则将资源的值修改为新的值，否则进入自旋重试，直到操作成功或达到自旋终止次数而放弃操作；</p>
+<p>自旋的次数可以通过启动参数进行修改，默认的自旋次数是10，以防止发生死循环；</p>
+<h5 id="CAS的原子性是如何实现的"><a href="#CAS的原子性是如何实现的" class="headerlink" title="CAS的原子性是如何实现的"></a>CAS的原子性是如何实现的</h5><p>CAS中包含比较和交换两个动作，但必须保证这两个动作的原子性，否则无法保证线程同步；</p>
+<p>CAS的原子性由CPU来提供硬件级别的同步原语支持，而无需使用操作系统的同步原语mutex进行上锁；</p>
+<p>不同平台架构的CPU的CAS指令也不一样，x86中的是<code>cmpxchg</code>，而在arm下的是<code>LL/SC</code>；</p>
+<h5 id="Java中是如何实现CAS操作的"><a href="#Java中是如何实现CAS操作的" class="headerlink" title="Java中是如何实现CAS操作的"></a>Java中是如何实现CAS操作的</h5><p>Java提供了AtomicInteger、AtomicBoolean等基本数据类型的原子类来实现CAS操作；</p>
+<p>这些原子类的CAS实现底层是调用了对应平台的本地方法，本地方法是C++编写的，在C++的本地方法中会调用汇编命令来实现CAS操作；</p>
+<h5 id="ABA问题"><a href="#ABA问题" class="headerlink" title="ABA问题"></a>ABA问题</h5><p>假设线程1和线程2按照以下顺序执行：</p>
+<ol>
+<li>线程1读取到内存中的资源值为A</li>
+<li>线程2读取到内存中的资源值，并将其修改为B</li>
+<li>线程2再次将资源值改为A</li>
+<li>线程1对资源进行CAS操作</li>
+</ol>
+<p>在第4步中，由于资源的值依旧为A，因此CAS操作成功，实际上该资源的值已经被线程B修改过了，这就是ABA问题，在某些场景下ABA问题会带来隐患；</p>
+<p>对ABA问题，比较有效的解决方案是引入版本号机制，资源的值每发生一次变化都对版本号进行更新，在CAS操作时会同时比较版本号和资源的值，只有当两者都没有发生变化时，CAS才能执行成功；</p>
+<h5 id="优缺点和适用场景"><a href="#优缺点和适用场景" class="headerlink" title="优缺点和适用场景"></a>优缺点和适用场景</h5><p><strong>1.使用限制</strong></p>
+<p>与悲观锁相比，乐观锁的适用场景受到了更多的限制，例如：CAS只能保证对单个变量操作时的原子性，当涉及到多个变量时，CAS就没有办法处理了，synchronized则可以对代码块进行加锁处理，而且乐观锁的实现方式更为复杂</p>
+<p><strong>2.读写是否频繁</strong></p>
+<p>在悲观锁和乐观锁都能使用的情况下，我们需要对资源的读写操作是否频繁来进行考虑：</p>
+<ul>
+<li>当读操作的频率比较高，写操作的频率比较低时，乐观锁更有优势，因为悲观锁会锁住代码块或数据，致使其他线程无法同时访问，影响并发，并且上锁和释放锁都需要消耗额外的资源；</li>
+<li>当写操作的频率比较高时，悲观锁更有优势，乐观锁在执行更新时如果失败，会不断的自旋重试，线程自旋时CPU相当于在空转，非常浪费CPU资源；</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          
+          <div class="post-tags">
+              <a href="/tags/%E9%94%81/" rel="tag">
+                <i class="fa fa-tag"></i> 锁
+              </a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/10/18/%E7%BA%BF%E7%A8%8B/" rel="prev" title="线程">
+      <i class="fa fa-chevron-left"></i> 线程
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/10/18/Spring/" rel="next" title="Spring">
+      Spring <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%94%81%E6%9C%BA%E5%88%B6"><span class="nav-text">锁机制</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%82%B2%E8%A7%82%E9%94%81"><span class="nav-text">悲观锁</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%B9%90%E8%A7%82%E9%94%81"><span class="nav-text">乐观锁</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#CAS%EF%BC%88Compare-and-Swap%EF%BC%89"><span class="nav-text">CAS（Compare and Swap）</span></a><ol class="nav-child"><li class="nav-item nav-level-5"><a class="nav-link" href="#CAS%E7%9A%84%E5%8E%9F%E5%AD%90%E6%80%A7%E6%98%AF%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E7%9A%84"><span class="nav-text">CAS的原子性是如何实现的</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#Java%E4%B8%AD%E6%98%AF%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0CAS%E6%93%8D%E4%BD%9C%E7%9A%84"><span class="nav-text">Java中是如何实现CAS操作的</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#ABA%E9%97%AE%E9%A2%98"><span class="nav-text">ABA问题</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#%E4%BC%98%E7%BC%BA%E7%82%B9%E5%92%8C%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-text">优缺点和适用场景</span></a></li></ol></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="幻胧"
+      src="https://avatars.githubusercontent.com/u/81507746?v=4">
+  <p class="site-author-name" itemprop="name">幻胧</p>
+  <div class="site-description" itemprop="description">echo 'Set free'</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">8</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">2</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">9</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/hazyKam" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;hazyKam" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="mailto:hazykam@qq.com" title="E-Mail → mailto:hazykam@qq.com" rel="noopener" target="_blank"><i class="fa fa-envelope fa-fw"></i>E-Mail</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fas fa-yin-yang"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">幻胧</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Gemini</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+<script src="/js/bookmark.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+  
+
+
+</body>
+</html>
