@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
-  <title>hazy&#39;s world</title>
+  <title>懒散木屋 - 胧</title>
   
   <subtitle>但愿长醉不复醒</subtitle>
   <link href="https://hazykam.github.io/atom.xml" rel="self"/>
@@ -10,7 +10,7 @@
   <id>https://hazykam.github.io/</id>
   
   <author>
-    <name>幻胧</name>
+    <name>胧</name>
     
   </author>
   
