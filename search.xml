@@ -538,24 +538,24 @@
 <h4 id="帮助指令"><a href="#帮助指令" class="headerlink" title="帮助指令"></a>帮助指令</h4><p><code>man 命令或配置文件</code>：使用该命令可以获得帮助信息，例如：<code>man ls</code>，可以获得ls指令的帮助信息；</p>
 <p><code>help 命令</code>：该指令可以获得shell内置命令的帮助信息；</p>
 <p>tip：命令帮助信息中显示的选项参数可以组合使用，例如：<code>ls -la</code>；</p>
-<h3 id="用户管理"><a href="#用户管理" class="headerlink" title="用户管理"></a>用户管理</h3><p>Linux系统是一个多用户多任务的分时操作系统，任何一个要使用系统资源的用户，都必须首先向系统管理员申请一个账号，然后以这个账号的身份进入系统。</p>
-<h4 id="添加用户"><a href="#添加用户" class="headerlink" title="添加用户"></a>添加用户</h4><p><code>useradd u_name</code>：使用该命令可以创建一个用户，创建用户后会默认在/home目录下生成一个用户文件夹，文件夹与username同名；</p>
+<h4 id="用户管理"><a href="#用户管理" class="headerlink" title="用户管理"></a>用户管理</h4><p>Linux系统是一个多用户多任务的分时操作系统，任何一个要使用系统资源的用户，都必须首先向系统管理员申请一个账号，然后以这个账号的身份进入系统。</p>
+<h5 id="添加用户"><a href="#添加用户" class="headerlink" title="添加用户"></a>添加用户</h5><p><code>useradd u_name</code>：使用该命令可以创建一个用户，创建用户后会默认在/home目录下生成一个用户文件夹，文件夹与username同名；</p>
 <p><code>useradd -d dir u_name</code>：-d代表在指定目录下生成用户文件夹，dir表示指定目录路径；</p>
-<h4 id="修改密码"><a href="#修改密码" class="headerlink" title="修改密码"></a>修改密码</h4><p><code>passwd u_name</code>：该命令可以修改指定用户的密码，如果不携带username参数，则默认为当前用户修改密码；</p>
-<h4 id="删除用户"><a href="#删除用户" class="headerlink" title="删除用户"></a>删除用户</h4><p><code>userdel u_name</code>：使用该命令可以删除指定用户，需要root权限，使用该命令删除用户时不会删除用户文件夹，需要同时删除用户文件夹需要加上参数<code>-r</code>，例如：<code>userdel -r u_name</code>，谨慎使用<code>-r</code>，一般情况下都建议保留用户文件夹；</p>
-<h4 id="查询用户信息"><a href="#查询用户信息" class="headerlink" title="查询用户信息"></a>查询用户信息</h4><p><code>id u_name</code>：该指令可以查询指定用户的id和group等信息；</p>
-<h4 id="切换用户"><a href="#切换用户" class="headerlink" title="切换用户"></a>切换用户</h4><p><code>su u_name</code>：该指令可以切换到指定的用户；</p>
+<h5 id="修改密码"><a href="#修改密码" class="headerlink" title="修改密码"></a>修改密码</h5><p><code>passwd u_name</code>：该命令可以修改指定用户的密码，如果不携带username参数，则默认为当前用户修改密码；</p>
+<h5 id="删除用户"><a href="#删除用户" class="headerlink" title="删除用户"></a>删除用户</h5><p><code>userdel u_name</code>：使用该命令可以删除指定用户，需要root权限，使用该命令删除用户时不会删除用户文件夹，需要同时删除用户文件夹需要加上参数<code>-r</code>，例如：<code>userdel -r u_name</code>，谨慎使用<code>-r</code>，一般情况下都建议保留用户文件夹；</p>
+<h5 id="查询用户信息"><a href="#查询用户信息" class="headerlink" title="查询用户信息"></a>查询用户信息</h5><p><code>id u_name</code>：该指令可以查询指定用户的id和group等信息；</p>
+<h5 id="切换用户"><a href="#切换用户" class="headerlink" title="切换用户"></a>切换用户</h5><p><code>su u_name</code>：该指令可以切换到指定的用户；</p>
 <p>注意：从权限高的用户切换到权限低的用户，不需要输入密码，相反则需要；当需要返回到之前的用户时，使用exit或logout指令；</p>
-<h4 id="查询首次登录用户"><a href="#查询首次登录用户" class="headerlink" title="查询首次登录用户"></a>查询首次登录用户</h4><p><code>whoami</code>：该指令可以查询我们首次登录系统时使用的是哪个用户；</p>
+<h5 id="查询首次登录用户"><a href="#查询首次登录用户" class="headerlink" title="查询首次登录用户"></a>查询首次登录用户</h5><p><code>whoami</code>：该指令可以查询我们首次登录系统时使用的是哪个用户；</p>
 <p><code>who am i</code>：作用同上，区别是会显示登录时间和使用哪个IP地址进行登录等信息；</p>
 <p><img src="https://gitee.com/graytang/img-repo/raw/master/img/202110181726779.png"></p>
-<h4 id="用户组"><a href="#用户组" class="headerlink" title="用户组"></a>用户组</h4><p>用户组类似于角色的概念，系统可以将拥有共性或相同权限的多个用户分配到一个组进行统一的管理</p>
+<h5 id="用户组"><a href="#用户组" class="headerlink" title="用户组"></a>用户组</h5><p>用户组类似于角色的概念，系统可以将拥有共性或相同权限的多个用户分配到一个组进行统一的管理</p>
 <p><code>groupadd g_name</code>：新增一个指定groupname的组；</p>
 <p><code>groupdel g_name</code>：删除一个指定的组；</p>
-<h4 id="添加用户时指定组"><a href="#添加用户时指定组" class="headerlink" title="添加用户时指定组"></a>添加用户时指定组</h4><p><code>useradd -g g_name u_name</code>：-g参数表示在添加用户时分配组；</p>
+<h5 id="添加用户时指定组"><a href="#添加用户时指定组" class="headerlink" title="添加用户时指定组"></a>添加用户时指定组</h5><p><code>useradd -g g_name u_name</code>：-g参数表示在添加用户时分配组；</p>
 <p>注意：添加用户时如果不分配组，默认会创建一个组名和用户名相同的组，并将用户分配到该组。</p>
-<h4 id="修改指定用户的组"><a href="#修改指定用户的组" class="headerlink" title="修改指定用户的组"></a>修改指定用户的组</h4><p><code>usermod -g g_name u_name</code>：usermod修改用户，携带-g参数时可以修改用户的组；</p>
-<h4 id="用户-组相关文件"><a href="#用户-组相关文件" class="headerlink" title="用户/组相关文件"></a>用户/组相关文件</h4><ul>
+<h5 id="修改指定用户的组"><a href="#修改指定用户的组" class="headerlink" title="修改指定用户的组"></a>修改指定用户的组</h5><p><code>usermod -g g_name u_name</code>：usermod修改用户，携带-g参数时可以修改用户的组；</p>
+<h5 id="用户-组相关文件"><a href="#用户-组相关文件" class="headerlink" title="用户/组相关文件"></a>用户/组相关文件</h5><ul>
 <li><p><strong>/etc/passwd</strong></p>
 <p>  用户配置文件，每行记录对应一个用户，用户又被<code>:</code>分割为7个字段，格式和含义如下：</p>
 <p>  用户名:口令:用户标识号:组标识号:注释性描述:主目录:登录Shell</p>
