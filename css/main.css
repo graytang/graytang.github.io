@@ -1245,7 +1245,7 @@ pre .javascript .function {
 }
 .links-of-author a::before,
 .links-of-author span.exturl::before {
-  background: #900b86;
+  background: #47c8ff;
   border-radius: 50%;
   content: ' ';
   display: inline-block;
@@ -2754,7 +2754,7 @@ mjx-container + br {
   }
 }
 body {
-  background: url("https://gitee.com/graytang/img-repo/raw/master/img/202110182020310.png");
+  background-image: url("https://gitee.com/graytang/img-repo/raw/master/img/202110182020310.png");
   background-repeat: no-repeat;
   background-attachment: fixed;
   background-size: cover;
