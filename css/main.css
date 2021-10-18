@@ -1245,7 +1245,7 @@ pre .javascript .function {
 }
 .links-of-author a::before,
 .links-of-author span.exturl::before {
-  background: #d5b1ff;
+  background: #ff0;
   border-radius: 50%;
   content: ' ';
   display: inline-block;
@@ -2754,7 +2754,7 @@ mjx-container + br {
   }
 }
 body {
-  background: url("https://gitee.com/graytang/img-repo/raw/master/img/202110182020310.png");
+  background: url("/images/background-girl.png");
   background-repeat: no-repeat;
   background-attachment: fixed;
   background-size: cover;
