@@ -1013,13 +1013,13 @@
 <ol>
 <li>迭代器遍历EntrySet方式</li>
 </ol>
- <figure class="highlight java"><table><tr><td class="code"><pre><span class="line">Map&lt;Integer, String&gt; map = <span class="keyword">new</span> HashMap&lt;&gt;(<span class="number">16</span>);map.put(<span class="number">1</span>, <span class="string">&quot;Java&quot;</span>);map.put(<span class="number">2</span>, <span class="string">&quot;JDK&quot;</span>);map.put(<span class="number">3</span>, <span class="string">&quot;Spring&quot;</span>);map.put(<span class="number">4</span>, <span class="string">&quot;MyBatis&quot;</span>); Iterator&lt;Map.Entry&lt;Integer, String&gt;&gt; iterator = map.entrySet().iterator();<span class="keyword">while</span> (iterator.hasNext()) &#123;    Map.Entry&lt;Integer, String&gt; entry = iterator.next();    System.out.println(entry.getKey() + <span class="string">&quot; -&gt; &quot;</span> + entry.getValue());&#125;</span><br></pre></td></tr></table></figure>
+ <figure class="highlight java"><table><tr><td class="code"><pre><span class="line">Map&lt;Integer, String&gt; map = <span class="keyword">new</span> HashMap&lt;&gt;(<span class="number">16</span>);</span><br><span class="line">map.put(<span class="number">1</span>, <span class="string">&quot;Java&quot;</span>);</span><br><span class="line">map.put(<span class="number">2</span>, <span class="string">&quot;JDK&quot;</span>);</span><br><span class="line">map.put(<span class="number">3</span>, <span class="string">&quot;Spring&quot;</span>);</span><br><span class="line">map.put(<span class="number">4</span>, <span class="string">&quot;MyBatis&quot;</span>);</span><br><span class="line"></span><br><span class="line">Iterator&lt;Map.Entry&lt;Integer, String&gt;&gt; iterator = map.entrySet().iterator();</span><br><span class="line"><span class="keyword">while</span> (iterator.hasNext()) &#123;</span><br><span class="line">    Map.Entry&lt;Integer, String&gt; entry = iterator.next();</span><br><span class="line">    System.out.println(entry.getKey() + <span class="string">&quot; -&gt; &quot;</span> + entry.getValue());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p> 输出结果：<img src="https://gitee.com/graytang/img-repo/raw/master/img/202109241416504.png"></p>
 <ol start="2">
 <li>迭代器遍历KeySet方式</li>
 </ol>
- <figure class="highlight java"><table><tr><td class="code"><pre><span class="line">Iterator&lt;Integer&gt; iterator = map.keySet().iterator();<span class="keyword">while</span> (iterator.hasNext()) &#123;    Integer key = iterator.next();    System.out.println(key + <span class="string">&quot; -&gt; &quot;</span> + map.get(key));&#125;</span><br></pre></td></tr></table></figure>
+ <figure class="highlight java"><table><tr><td class="code"><pre><span class="line">Iterator&lt;Integer&gt; iterator = map.keySet().iterator();</span><br><span class="line"><span class="keyword">while</span> (iterator.hasNext()) &#123;</span><br><span class="line">    Integer key = iterator.next();</span><br><span class="line">    System.out.println(key + <span class="string">&quot; -&gt; &quot;</span> + map.get(key));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p> 输出结果同上</p>
 </li>
@@ -1027,20 +1027,20 @@
 <ol>
 <li>foreach遍历EntrySet方式</li>
 </ol>
- <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> (Map.Entry&lt;Integer, String&gt; entry : map.entrySet()) &#123;    System.out.println(entry.getKey() + <span class="string">&quot; -&gt; &quot;</span> + entry.getValue());&#125;</span><br></pre></td></tr></table></figure>
+ <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> (Map.Entry&lt;Integer, String&gt; entry : map.entrySet()) &#123;</span><br><span class="line">    System.out.println(entry.getKey() + <span class="string">&quot; -&gt; &quot;</span> + entry.getValue());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p> 输出结果同上</p>
 <ol start="2">
 <li>foreach遍历KeySet方式</li>
 </ol>
- <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> (Integer key : map.keySet()) &#123;    System.out.println(key + <span class="string">&quot; -&gt; &quot;</span> + map.get(key));&#125;</span><br></pre></td></tr></table></figure>
+ <figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="keyword">for</span> (Integer key : map.keySet()) &#123;</span><br><span class="line">    System.out.println(key + <span class="string">&quot; -&gt; &quot;</span> + map.get(key));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 
 <p> 输出结果同上</p>
 </li>
 <li><p>使用<strong>Lambda表达式（JDK1.8+）</strong></p>
 </li>
 </ol>
-<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">map.forEach((key, value) -&gt; &#123;    System.out.println(key + <span class="string">&quot; -&gt; &quot;</span> + value);&#125;);</span><br></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line">map.forEach((key, value) -&gt; &#123;</span><br><span class="line">    System.out.println(key + <span class="string">&quot; -&gt; &quot;</span> + value);</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
 
 <p>输出结果同上</p>
 <ol start="4">
@@ -1048,14 +1048,13 @@
 <ol>
 <li>Streams API单线程遍历</li>
 </ol>
- <figure class="highlight java"><table><tr><td class="code"><pre><span class="line">map.entrySet().stream().forEach((entry) -&gt; &#123;    System.out.println(entry.getKey() + <span class="string">&quot; -&gt; &quot;</span> + entry.getValue());&#125;);</span><br></pre></td></tr></table></figure>
+ <figure class="highlight java"><table><tr><td class="code"><pre><span class="line">map.entrySet().stream().forEach((entry) -&gt; &#123;</span><br><span class="line">    System.out.println(entry.getKey() + <span class="string">&quot; -&gt; &quot;</span> + entry.getValue());</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
 
 <p> 输出结果同上</p>
 <ol start="2">
 <li>Streams API多线程遍历</li>
 </ol>
- <figure class="highlight java"><table><tr><td class="code"><pre><span class="line">map.entrySet().parallelStream().forEach((entry) -&gt; &#123;    System.out.println(entry.getKey() + <span class="string">&quot; -&gt; &quot;</span> + entry.getValue());&#125;);</span><br></pre></td></tr></table></figure>
-
+ <figure class="highlight java"><table><tr><td class="code"><pre><span class="line">map.entrySet().parallelStream().forEach((entry) -&gt; &#123;</span><br><span class="line">    System.out.println(entry.getKey() + <span class="string">&quot; -&gt; &quot;</span> + entry.getValue());</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure>
 <p> 输出结果：<img src="https://gitee.com/graytang/img-repo/raw/master/img/202109241420256.png"></p>
 </li>
 </ol>
