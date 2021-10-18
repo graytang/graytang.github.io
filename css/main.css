@@ -1245,7 +1245,7 @@ pre .javascript .function {
 }
 .links-of-author a::before,
 .links-of-author span.exturl::before {
-  background: #39ffff;
+  background: #ff2eb9;
   border-radius: 50%;
   content: ' ';
   display: inline-block;
@@ -2761,7 +2761,7 @@ body {
 }
 .site-brand-container,
 .headband {
-  background: #626c80 none repeat scroll !important;
+  background: #efcdb1 none repeat scroll !important;
 }
 .book-mark-link::before {
   color: #efcdb1;
