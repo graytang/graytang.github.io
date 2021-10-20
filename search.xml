@@ -230,7 +230,7 @@
   <entry>
     <title>使用natapp实现简易的内网穿透</title>
     <url>/2021/10/18/%E4%BD%BF%E7%94%A8natapp%E5%AE%9E%E7%8E%B0%E7%AE%80%E6%98%93%E7%9A%84%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F/</url>
-    <content><![CDATA[<h2 id="让外网访问VMware中Linux部署的web项目"><a href="#让外网访问VMware中Linux部署的web项目" class="headerlink" title="让外网访问VMware中Linux部署的web项目"></a>让外网访问VMware中Linux部署的web项目</h2><h3 id="设置端口映射"><a href="#设置端口映射" class="headerlink" title="设置端口映射"></a>设置端口映射</h3><p>在VMware中，编辑 -&gt; 虚拟网络编辑器 -&gt; 选中VMnet8 -&gt;VMnet信息 -&gt; NAT设置 -&gt; 端口转发 -&gt; 添加</p>
+    <content><![CDATA[<h2 id="让外网访问虚拟机上部署的web项目"><a href="#让外网访问虚拟机上部署的web项目" class="headerlink" title="让外网访问虚拟机上部署的web项目"></a>让外网访问虚拟机上部署的web项目</h2><h3 id="设置端口映射"><a href="#设置端口映射" class="headerlink" title="设置端口映射"></a>设置端口映射</h3><p>在VMware中，编辑 -&gt; 虚拟网络编辑器 -&gt; 选中VMnet8 -&gt;VMnet信息 -&gt; NAT设置 -&gt; 端口转发 -&gt; 添加</p>
 <p><img src="https://gitee.com/graytang/img-repo/raw/master/img/202110181734046.png"></p>
 <p>虚拟机IP地址可以在Linux中通过<code>ifconfig</code>查看</p>
 <p>虚拟机端口则是项目的启动端口，需要设置对外开放</p>
@@ -379,10 +379,10 @@
 </ul>
 <p>线程会比较得到的值是否和指定位置资源的值一致，如果一致则将资源的值修改为新的值，否则进入自旋重试，直到操作成功或达到自旋终止次数而放弃操作；</p>
 <p>自旋的次数可以通过启动参数进行修改，默认的自旋次数是10，以防止发生死循环；</p>
-<h5 id="CAS的原子性是如何实现的"><a href="#CAS的原子性是如何实现的" class="headerlink" title="CAS的原子性是如何实现的"></a>CAS的原子性是如何实现的</h5><p>CAS中包含比较和交换两个动作，但必须保证这两个动作的原子性，否则无法保证线程同步；</p>
+<h4 id="CAS的原子性是如何实现的"><a href="#CAS的原子性是如何实现的" class="headerlink" title="CAS的原子性是如何实现的"></a>CAS的原子性是如何实现的</h4><p>CAS中包含比较和交换两个动作，但必须保证这两个动作的原子性，否则无法保证线程同步；</p>
 <p>CAS的原子性由CPU来提供硬件级别的同步原语支持，而无需使用操作系统的同步原语mutex进行上锁；</p>
 <p>不同平台架构的CPU的CAS指令也不一样，x86中的是<code>cmpxchg</code>，而在arm下的是<code>LL/SC</code>；</p>
-<h5 id="Java中是如何实现CAS操作的"><a href="#Java中是如何实现CAS操作的" class="headerlink" title="Java中是如何实现CAS操作的"></a>Java中是如何实现CAS操作的</h5><p>Java提供了AtomicInteger、AtomicBoolean等基本数据类型的原子类来实现CAS操作；</p>
+<h4 id="Java中是如何实现CAS操作的"><a href="#Java中是如何实现CAS操作的" class="headerlink" title="Java中是如何实现CAS操作的"></a>Java中是如何实现CAS操作的</h4><p>Java提供了AtomicInteger、AtomicBoolean等基本数据类型的原子类来实现CAS操作；</p>
 <p>这些原子类的CAS实现底层是调用了对应平台的本地方法，本地方法是C++编写的，在C++的本地方法中会调用汇编命令来实现CAS操作；</p>
 <h5 id="ABA问题"><a href="#ABA问题" class="headerlink" title="ABA问题"></a>ABA问题</h5><p>假设线程1和线程2按照以下顺序执行：</p>
 <ol>
@@ -393,7 +393,7 @@
 </ol>
 <p>在第4步中，由于资源的值依旧为A，因此CAS操作成功，实际上该资源的值已经被线程B修改过了，这就是ABA问题，在某些场景下ABA问题会带来隐患；</p>
 <p>对ABA问题，比较有效的解决方案是引入版本号机制，资源的值每发生一次变化都对版本号进行更新，在CAS操作时会同时比较版本号和资源的值，只有当两者都没有发生变化时，CAS才能执行成功；</p>
-<h5 id="优缺点和适用场景"><a href="#优缺点和适用场景" class="headerlink" title="优缺点和适用场景"></a>优缺点和适用场景</h5><p><strong>1.使用限制</strong></p>
+<h4 id="优缺点和适用场景"><a href="#优缺点和适用场景" class="headerlink" title="优缺点和适用场景"></a>优缺点和适用场景</h4><p><strong>1.使用限制</strong></p>
 <p>与悲观锁相比，乐观锁的适用场景受到了更多的限制，例如：CAS只能保证对单个变量操作时的原子性，当涉及到多个变量时，CAS就没有办法处理了，synchronized则可以对代码块进行加锁处理，而且乐观锁的实现方式更为复杂</p>
 <p><strong>2.读写是否频繁</strong></p>
 <p>在悲观锁和乐观锁都能使用的情况下，我们需要对资源的读写操作是否频繁来进行考虑：</p>
@@ -569,6 +569,7 @@
 <p>  组名:口令:组标识号:组内用户列表</p>
 </li>
 </ul>
+<hr>
 <h2 id="配置环境"><a href="#配置环境" class="headerlink" title="配置环境"></a>配置环境</h2><p>常用的安装方式：rpm包、tar包、yum在线安装</p>
 <h3 id="yum"><a href="#yum" class="headerlink" title="yum"></a>yum</h3><p>yum的基本语法：yum [选项] [命令] [包 …]</p>
 <p>选项：</p>
@@ -622,9 +623,366 @@
       </tags>
   </entry>
   <entry>
+    <title>MySQL知识点</title>
+    <url>/2021/10/20/MySQL%E7%9F%A5%E8%AF%86%E7%82%B9/</url>
+    <content><![CDATA[<h3 id="数据库"><a href="#数据库" class="headerlink" title="数据库"></a>数据库</h3><h4 id="MyBatis的优缺点"><a href="#MyBatis的优缺点" class="headerlink" title="MyBatis的优缺点"></a>MyBatis的优缺点</h4><p>优点：</p>
+<ol>
+<li>基于SQL语句编程，非常灵活，不会对应用程序或数据库的现有设计造成影响，SQL语句可以写在XML文件中，解除SQL语句与逻辑代码的耦合，便于统一管理；提供特殊的XML标签，支持编写动态SQL，同时支持SQL重用。</li>
+<li>与JDBC相比，不需要手动创建并开关连接，减少了大量的冗余代码。</li>
+<li>与多种数据库的兼容性都很好，MyBatis使用JDBC连接数据库，所以只要JDBC支持的数据库MyBatis都支持。</li>
+<li>能够与Spring很好的集成。</li>
+<li>提供映射标签，支持对象与数据库的ORM对象关系映射，方便对象关系组件维护。</li>
+</ol>
+<p>缺点：</p>
+<ol>
+<li>SQL语句的编写工作量较大，尤其是字段、关联表较多时，对开发人员编写SQL语句的功底有一定要求。</li>
+<li>由于不同的数据库都会有不同的SQL方言，导致数据库移植性差，不能随意更换数据库。</li>
+</ol>
+<h4 id="MyBatis与Hibernate的区别"><a href="#MyBatis与Hibernate的区别" class="headerlink" title="MyBatis与Hibernate的区别"></a>MyBatis与Hibernate的区别</h4><blockquote>
+<p>hibernate是Table与对象的映射，适合于面向对象开发，实体清晰时适合使用；</p>
+<p>mybatis是sql与对象的映射，统计查询时适合使用。</p>
+<p>hibernate主要是配置实体关系，查询实体；</p>
+<p>mybatis主要是写sql；</p>
+<p>Mybatis由于所有SQL都是依赖数据库书写的，所以扩展性，迁移性比较差。</p>
+</blockquote>
+<ul>
+<li>开发速度的对比：</li>
+</ul>
+<p>Hibernate的真正掌握要比Mybatis难些。Mybatis框架相对简单很容易手，但也相对简陋些。</p>
+<p>比起两者的开发速度，不仅仅要考虑到两者的特性及性能，更要根据项目需求去考虑究竟哪一个更适合项目开发，比如：</p>
+<p>一个项目中用到的复杂查询基本没有，就是简单的增删改查，这样选择hibernate效率就很快了，因为基本的sql语句已经被封装好了，根本不需要你去写sql语句,这就节省了大量的时间；</p>
+<p>但是对于一个大型项目，复杂语句较多，这样再去选择hibernate就不是一个太好的选择，选择mybatis就会加快许多，而且语句的管理也比较方便。</p>
+<ul>
+<li>开发工作量的对比：</li>
+</ul>
+<p>Hibernate和MyBatis都有相应的代码生成工具，可以生成简单基本的DAO层方法。</p>
+<p>针对高级查询，Mybatis需要手动编写SQL语句，以及ResultMap的映射；而Hibernate有良好的映射机制，开发者无需关心SQL的生成与结果映射，可以更专注于业务流程。</p>
+<ul>
+<li>SQL优化方面</li>
+</ul>
+<p>Hibernate的查询会将表中的所有字段查询出来，这一点会有性能消耗。</p>
+<p>Hibernate也可以自己写SQL来指定需要查询的字段，但这样就破坏了Hibernate开发的简洁性，而Mybatis的SQL是手动编写的，所以可以按需求指定查询的字段。</p>
+<p>Hibernate HQL语句的调优需要将SQL打印出来，而Hibernate的SQL被很多人嫌弃因为太丑了。</p>
+<p>MyBatis的SQL是自己手动写的所以方便调整，但Hibernate具有自己的日志统计。Mybatis本身不带日志统计，使用Log4j进行日志记录。</p>
+<ul>
+<li>对象管理的对比：</li>
+</ul>
+<p>Hibernate是完整的对象/关系映射解决方案，它提供了对象状态管理（state management）的功能，使开发者不再需要理会底层数据库系统的细节。也就是说，相对于常见的JDBC/SQL持久层方案中需要管理SQL语句，Hibernate采用了更自然的面向对象的视角来持久化Java应用中的数据。</p>
+<p>换句话说，使用Hibernate的开发者应该总是关注对象的状态（state），不必考虑SQL语句的执行，这部分细节已经由Hibernate掌管了，只有开发者在进行系统性能调优的时候才需要进行了解，而MyBatis在这一 块没有文档说明，用户需要对对象自己进行详细的管理。</p>
+<ul>
+<li>缓存机制对比：</li>
+</ul>
+<p>相同点：都可以实现自己的缓存或使用其他第三方缓存方案，创建适配器来完全覆盖缓存行为。</p>
+<p>不同点：Hibernate的二级缓存配置在SessionFactory生成的配置文件中进行详细配置，然后再在具体的表对象映射中配置是哪种缓存。</p>
+<p>MyBatis的二级缓存配置都是在每个具体的表-对象映射中进行详细配置，这样针对不同的表可以自定义不同的缓存机制。并且Mybatis可以在命名空间中共享相同的缓存配置和实例，通过Cache-ref来实现。</p>
+<p>两者比较：因为Hibernate对查询对象有着良好的管理机制，用户无需关心SQL，所以在使用二级缓存时如果出现脏数据，系统会报出错误并提示。</p>
+<p>而MyBatis在这一方面，使用二级缓存时需要特别小心。如果不能完全确定数据更新操作的波及范围，需要避免Cache的盲目使用。否则，脏数据的出现会给系统的正常运行带来很大的隐患。</p>
+<blockquote>
+<p>Hibernate功能强大，数据库无关性好，O/R映射能力强，如果你对Hibernate相当精通，而且对Hibernate进行了适当的封装，那么你的项目整个持久层代码会相当简单，需要写的代码很少，开发速度很快。</p>
+<p>Hibernate的缺点就是学习门槛不低，要精通门槛更高，而且怎么设计O/R映射，在性能和对象模型之间如何权衡取得平衡，以及怎样用好Hibernate方面需要经验和能力都很强才行。</p>
+<p>MyBatis入门简单，即学即用，提供了数据库查询的自动对象绑定功能，且延续了很好的SQL使用经验，对于没有那么高的对象模型要求的项目来说，相当完美。</p>
+<p>MyBatis的缺点就是框架还是比较简陋，功能尚有缺失，虽然简化了数据绑定代码，但是整个底层数据库查询实际还是要自己写的，工作量也比较大，而且不太容易适应快速数据库修改。</p>
+</blockquote>
+<h4 id="‘-’和‘-’的区别"><a href="#‘-’和‘-’的区别" class="headerlink" title="‘#{}’和‘${}’的区别"></a>‘#{}’和‘${}’的区别</h4><p>‘#{}’是预编译处理、是占位符，${}是字符串替换、是拼接符。</p>
+<p>Mybatis在处理‘#{}’时，会将sql中的‘#{}’替换为?，调用PreparedStatement来赋值；</p>
+<p>在处理${}时，只是将${}替换成变量的值，调用Statement赋值。</p>
+<p>‘#{}’的变量替换是在DBMS中的，变量替换后‘#{}’对应的变量会自动加上<code>&#39;&#39;</code>单引号；</p>
+<p>${}的变量替换在DBMS外，变量替换后对应的变量不会加上单引号。</p>
+<p>使用‘#{}’可以有效地防止SQL注入，提高系统安全性。</p>
+<h4 id="Mybatis的插件运行原理"><a href="#Mybatis的插件运行原理" class="headerlink" title="Mybatis的插件运行原理"></a>Mybatis的插件运行原理</h4><p>Mybatis只支持针对<strong>ParameterHandler</strong>、<strong>ResultSetHandler</strong>、<strong>StatementHandler</strong>、<strong>Executor</strong>这4种接口的插件。Mybatis的插件其实是基于JDK的动态代理实现的<strong>拦截器</strong>，为需要拦截的接口生成代理对象，以实现接口方法的拦截功能，每当执行这4种接口对象的方法时，就会进入拦截方法，具体就是<strong>InvocationHandler</strong>的**invoke()**方法，拦截指定的方法。</p>
+<p>编写插件：实现Mybatis的Interceptor接口并重写intercept()方法，然后再给插件加上**@Intercepts<strong>注解，在@Intercepts中使用</strong>@Signature**指定要拦截哪一个接口的哪些方法；启用插件则需要加上@Component注解，或是在配置文件中配置插件，使其加入IoC容器即可。</p>
+<p>使用示例：</p>
+<figure class="highlight java"><table><tr><td class="code"><pre><span class="line"><span class="meta">@Intercepts(&#123;</span></span><br><span class="line"><span class="meta">    @Signature(type = StatementHandler.class, method = &quot;query&quot;, args = &#123;Statement.class, ResultHandler.class&#125;),</span></span><br><span class="line"><span class="meta">    @Signature(type = StatementHandler.class, method = &quot;update&quot;, args = &#123;Statement.class&#125;),</span></span><br><span class="line"><span class="meta">    @Signature(type = StatementHandler.class, method = &quot;batch&quot;, args = &#123;Statement.class&#125;)</span></span><br><span class="line"><span class="meta">            &#125;)</span></span><br><span class="line"><span class="meta">@Component</span></span><br><span class="line"> </span><br><span class="line">invocation.proceed();    <span class="comment">// 使用Mybatis拦截器提供的invocation对象，调用proceed()方法才会执行原有方法的业务逻辑</span></span><br></pre></td></tr></table></figure>
+
+<h4 id="索引的基本原理"><a href="#索引的基本原理" class="headerlink" title="索引的基本原理"></a>索引的基本原理</h4><p>索引用来快速地寻找那些具有特定值的记录，如果没有索引，一般在执行查询时会遍历整张表。</p>
+<p>索引的原理：就是把无序的数据变成有序的查询</p>
+<ol>
+<li><p>把创建了索引的列的内容进行排序</p>
+</li>
+<li><p>对排序结果生成<strong>倒排表</strong></p>
+<blockquote>
+<p>一个未经处理的数据库中，一般是以文档ID作为索引，以文档内容作为记录。<br>而Inverted Index指的是将单词或记录作为索引，将文档ID作为记录，这样便可以方便地通过单词或记录查找到其所在的文档。</p>
+</blockquote>
+</li>
+<li><p>在倒排表的内容中加入数据的地址链</p>
+</li>
+<li><p>在查询时，先拿到倒排表内容，再取出数据地址链，从而查找到具体的数据</p>
+</li>
+</ol>
+<h4 id="MySQL聚簇索引和非聚簇索引的区别"><a href="#MySQL聚簇索引和非聚簇索引的区别" class="headerlink" title="MySQL聚簇索引和非聚簇索引的区别"></a>MySQL聚簇索引和非聚簇索引的区别</h4><p>聚簇索引和非聚簇索引都使用B+树作为数据结构。</p>
+<ul>
+<li>聚簇索引：将数据和索引放在一起，且有一定的顺序。数据的物理存放顺序与索引顺序是一致的，找到索引的同时也找到了数据。只要索引是相邻的，那么对应的数据一定也是相邻地存放在磁盘中的。</li>
+<li>非聚簇索引：叶子节点不存放数据，而是存放数据行的地址。类似于目录，根据索引找到数据行的地址后再到指定的磁盘地址获取数据。</li>
+</ul>
+<blockquote>
+<p>聚簇索引的优势：</p>
+<ol>
+<li>查询通过聚簇索引可以直接获取数据；非聚簇索引查询时，在非覆盖索引（即不只查询索引列，还查询其他数据）的情况下需要二次查询。</li>
+<li>聚簇索引对于范围查询的效率很高，因为数据是有序排列的。</li>
+<li>聚簇索引适合用在需要排序的场合。</li>
+</ol>
+<p>劣势：</p>
+<ol>
+<li>维护索引的成本很高，特别是在插入新行或主键被更新导致要分页（page split）的时候。在大量插入新行后，需要在负载较低的时间段，通过OPTIMIZE TABLE优化表，因为必须被移动的行可能会产生磁盘碎片。使用独享表空间可以弱化碎片。</li>
+<li>表如果使用UUID（随机ID）作为主键使数据的存储地址变得稀疏，就可能导致聚簇索引比全表扫描更慢，MySQL官方建议使用auto_increment形式的int类型作为主键。</li>
+<li>如果主键占用的空间比较大，那辅助索引（二级索引；非聚簇索引形式）也会很大，因为辅助索引的叶子节点存储的是主键值；过长的主键值会占用更多的磁盘空间。</li>
+</ol>
+</blockquote>
+<p>InnoDB中一定有主键，主键一定是聚簇索引；不手动设置主键时，则会使用unique索引，如果没有unique索引，则会使用数据库内部的一个隐藏的行id当作主键索引。</p>
+<p>基于主键创建的索引称为二级索引或辅助索引，辅助索引访问数据总是需要二次查找。</p>
+<p>非聚簇索引都是辅助索引，如复合索引、前缀索引、唯一索引、辅助索引的叶子节点存储的是主键的值。</p>
+<p>MyISAM使用的是非聚簇索引，没有聚簇索引。</p>
+<p>非聚簇索引的两颗B+树非常相似，节点的结构完全一致，只是存储的内容不同，主键索引的B+树节点存储了主键值，辅助索引的B+树存储了辅助键值，表数据则存储在独立的空间。</p>
+<p>两颗B+树的叶子节点都使用一个地址指向表数据，对于表数据来说两个键没有任何区别。</p>
+<p>由于索引树是独立的，通过辅助键建所无需访问主键的索引树。</p>
+<p>如果涉及数据量很大的排序、全表扫描、count之类的操作，MyISAM会更有优势，因为索引占用的空间小，这些操作都是需要在内存中执行的。</p>
+<h4 id="MySQL索引的数据结构以及优劣"><a href="#MySQL索引的数据结构以及优劣" class="headerlink" title="MySQL索引的数据结构以及优劣"></a>MySQL索引的数据结构以及优劣</h4><p>索引的数据结构和存储引擎的实现油管，在MySQL中使用较多的索引有B+树索引、Hash索引等，InnoDB的默认索引实现为B+树索引。</p>
+<p>Hash索引底层的数据结构就是HashMap，在需求为绝大多数查询都是单条记录查询时，可以选择Hash索引，单条查询性能最高；其余大部分场景，建议选择B+树索引。</p>
+<blockquote>
+<p>B+树：</p>
+<p>B+树是一个平衡的多叉树，从根节点到叶子节点的深度不超过1（自上而下为深度，自下而上为高度），且同层级的节点之间存在双向指针。</p>
+<p>B+树的常规检索中，从根节点到叶子节点的搜索效率基本相当，不会出现大幅波动，而且基于索引的顺序查询时，也可以利用双向指针快速移动，效率非常高。因此，B+树索引被广泛应用于数据库、文件系统等场景。</p>
+</blockquote>
+<p><img src="https://gitee.com/graytang/img-repo/raw/master/img/202109241438779.jpg"></p>
+<blockquote>
+<p>Hash索引：</p>
+<p>Hash索引的底层结构是HashMap，采用指定的Hash算法将键值替换为Hash值，检索时不需要像B+树一样从根节点到叶子节点逐级查找，只需要一次Hash算法即可定位到相应的位置，速度非常快。</p>
+</blockquote>
+<p>等值查询时hash索引有绝对优势，前提是键值都是唯一的，如果键值不唯一，就需要先找到键的所在位置，再根据链表向后查找，直到查找到相应的数据；</p>
+<p>在需要对范围进行查询检索时，hash索引就无法使用了，原本有序的键值在经过hash算法后会丢失顺序，也就没办法利用索引进行范围查询了。</p>
+<p>hash索引也没办法利用索引排序，以及like ‘xx%’这样的部分模糊查询（这种部分模糊查询本质上也是范围查询）。</p>
+<p>hash索引也不支持多列联合索引的最左匹配规则。</p>
+<p>在有大量重复的键值时，hash索引也会因为hash碰撞导致效率降低。</p>
+<p>B+树索引的关键字检索效率比较平均，不像B树波动幅度大。</p>
+<h4 id="索引设计原则"><a href="#索引设计原则" class="headerlink" title="索引设计原则"></a>索引设计原则</h4><p>索引定义：是一个单独的，存储在磁盘上的数据库结构，其包含着对数据表里所有记录的引用指针。为了使索引的使用效率更高，在创建索引时，必须考虑在哪些字段上创建索引和创建什么类型的索引。</p>
+<ol>
+<li><p><strong>选择唯一性索引</strong></p>
+<p> 唯一性索引的值是唯一的，可以更快速的通过该索引来确定某条记录。</p>
+<p> 例如，学生表中学号是具有唯一性的字段。为该字段建立唯一性索引可以很快的确定某个学生的信息。如果使用姓名的话，可能存在同名现象，从而降低查询速度。</p>
+</li>
+<li><p><strong>为经常需要排序、分组和联合操作的字段建立索引</strong></p>
+<p> 经常需要ORDER BY、GROUP BY、DISTINCT和UNION等操作的字段，排序操作会浪费很多时间。如果为其建立索引，可以有效地避免排序操作。</p>
+</li>
+<li><p><strong>为经常作为查询条件的字段建立索引</strong></p>
+<p> 如果某个字段经常用来做查询条件，那么该字段的查询速度会影响整个表的查询速度。因此为这样的字段建立索引，可以提高整个表的查询速度。</p>
+</li>
+<li><p><strong>定义了外键的数据列一定要建立索引</strong></p>
+</li>
+<li><p><strong>更新频繁的字段不适合创建索引</strong></p>
+</li>
+<li><p><strong>限制索引的数量</strong></p>
+<p> 索引不是越多越好。每个索引都需要占用额外的磁盘空间，索引越多，需要的磁盘空间就越大，同时会降低写操作的性能。修改表时，对索引的重构和更新成本很高，索引越多，更新表的时间越长。</p>
+</li>
+<li><p><strong>尽量使用数据量少的索引</strong></p>
+<p> 如果索引的值比较大，查询的速度就会受到影响。例如，对一个CHAR(100)类型的字段进行全文<br> 检索需要的时间，肯定要比对CHAR(10)类型的字段需要的时间要多。</p>
+</li>
+<li><p><strong>尽量使用短索引</strong></p>
+<p> 如果索引字段的值很长，应该指定一个定长的前缀，使用值的前缀来索引，这样能够节省大量的索引空间，如果搜索词超过索引前缀长度，则使用索引排除不匹配的行，然后检索其余行是否匹配。</p>
+</li>
+<li><p><strong>尽量扩展索引，不要新建索引</strong></p>
+<p> 比如表中已经有a的索引，现在要加(a,b)的索引，那么只需要修改原来的索引即可。</p>
+</li>
+<li><p><strong>即时删除不再使用或者很少使用的索引</strong></p>
+<p>表中的数据被大量更新，或数据的使用方式被改变后，原有的一些索引可能不再需要，DBA应当定期找出这些索引，将它们删除，从而减少索引对更新操作的影响。</p>
+</li>
+<li><p><strong>对于定义为TEXT、IMAGE和BIT数据类型的列不要建立索引</strong></p>
+</li>
+<li><p><strong>记录很少的表不应建立索引</strong></p>
+<p>记录较少的表，索引效果较差，没有必要建立索引。</p>
+</li>
+</ol>
+<h4 id="锁的类型"><a href="#锁的类型" class="headerlink" title="锁的类型"></a>锁的类型</h4><p>基于锁的属性分类：共享锁、排他锁</p>
+<p>基于锁的粒度分类：行锁（InnoDB）、表锁（InnoDB、MyISAM）、页锁（BDB引擎）、记录锁、间隙锁、临键锁</p>
+<p>基于锁的状态分类：意向共享锁、意向排他锁</p>
+<ul>
+<li><p>共享锁（Share Lock）</p>
+  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">共享锁也称读锁、S锁；当一个事务为数据加上读锁之后，其他事务只能对该数据加读锁，而不能加写锁，直到所有的读锁释放之后其他事务才能对其加写锁。共享锁的特性主要是为了支持并发的读取数据，读取数据的时候不允许修改，避免出现重复读的问题。</span><br></pre></td></tr></table></figure></li>
+<li><p>排他锁（Exclusive Lock）</p>
+  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">排他锁又称写锁、X锁；当一个事务为数据加上写锁时，其他请求不能再为数据加任何锁，直到该锁释放之后，其他事务才能对数据加锁。排他锁的目的是在数据修改时，不允许其他请求同时读写，避免出现脏数据和脏读的问题。</span><br></pre></td></tr></table></figure></li>
+<li><p>表锁</p>
+  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">表锁是指上锁的时候锁住的是整张表，当下一个事务访问该表的时候，必须等上一个事务释放表锁才能访问表。</span><br><span class="line">特点：粒度大，加锁简单，容器冲突。</span><br></pre></td></tr></table></figure></li>
+<li><p>行锁</p>
+  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">行锁值上锁时锁住表的某一行或多行记录，其他事务访问同一张表时，除了被锁住的记录，其他记录均可正常访问。</span><br><span class="line">特点：粒度小，开销大加锁慢，会出现死锁；但不容易冲突，相比表锁并发度更高。</span><br></pre></td></tr></table></figure></li>
+<li><p>记录锁（Record Lock）</p>
+  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">记录锁属于行锁的一种，但记录锁只会锁住某一条记录，只有当访问的条件字段是唯一索引列或主键，且被命中时才会触发记录锁。</span><br><span class="line">记录锁可以避免数据在查询时被修改的重复读，以及在修改事务未提交时被其他事务读取的脏读问题。</span><br></pre></td></tr></table></figure></li>
+<li><p>页锁</p>
+  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">页锁是MySQL中粒度介于行锁和表锁中间的一种锁。表锁速度快冲突多，行锁冲突少速度慢，页锁则是折中了一下，加锁时会锁定相邻的一组记录。</span><br><span class="line">特点：开销和加锁时间介于表锁和行锁之间，会出现死锁；锁定粒度介于表锁和行锁之间，并发度一般。</span><br></pre></td></tr></table></figure></li>
+<li><p>间隙锁（Gap Lock）</p>
+  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">属于行锁的一种；</span><br><span class="line">间隙锁要么封锁索引记录中的间隔，要么锁住第一个索引记录前面的值或者最后一个索引记录后面的值。</span><br><span class="line">当我们采用范围条件查询数据时，InnoDB会对这个范围内的数据进行加锁。比如有id为：1、3、5、7的4条数据，我们查找1-7范围的数据。那么1-7都会被加上锁，2、4、6 也在1-7的范围中，但是不存在这些数据记录，这些2、4、6就被称为间隙。</span><br><span class="line">范围查找时，会把整个范围的数据全部锁定住，即便这个范围内不存在的一些数据，也会被锁定住，比如我要在1、3、5、7中插入2，这个时候1-7都被锁定住了，就无法插入2。</span><br><span class="line">触发条件：在Repeatable Read（可重复读）级别下，范围查询并且查询未命中记录，查询条件必须命中索引。</span><br><span class="line">作用：防止在事务并发时产生的幻读。</span><br></pre></td></tr></table></figure></li>
+<li><p>临键锁（Next-Key Lock）</p>
+  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">行锁的一种，并且是InnoDB的默认行锁算法，结合了记录锁和间隙锁的特性，临键锁的封锁范围，既包含索引记录，又包含索引区间。触发条件：范围查询并命中记录，查询条件命中了索引。作用：避免在范围查询时出现脏读、重复读、幻读，加了临键锁后，范围区间内数据不允许被修改和插入。</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p><strong>锁的状态</strong></p>
+<p>如果当事务A加锁成功后设置了一个状态告诉后来的事务，已经对表里的行加了一个排他锁了，无法再对整张表加共享锁或排他锁，那么后来的需要整表加锁的事务只需要获取这个状态就可以知道是否可以对该表加锁，避免了对整个索引树的每个节点扫描是否加锁，这个状态就是意向锁。</p>
+<ul>
+<li><p>意向共享锁</p>
+  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">一个事务试图对整张表加共享锁之前，首先需要获得这个表的意向共享锁。</span><br></pre></td></tr></table></figure></li>
+<li><p>意向排他锁</p>
+  <figure class="highlight plaintext"><table><tr><td class="code"><pre><span class="line">一个事务试图对整张表加排他锁之前，首先需要获得这个表的意向排他锁。</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h4 id="MySQL执行计划参数"><a href="#MySQL执行计划参数" class="headerlink" title="MySQL执行计划参数"></a>MySQL执行计划参数</h4><p>MySQL中，在select语句前加上“explain”或“desc”关键字，即可查看该查询语句的执行计划，分析执行计划是优化SQL的重要手段。</p>
+<p>输出参数：</p>
+<ul>
+<li><p>id<br>  select 查询序列号<br>  id相同，执行顺序由上至下；id不同，id值越大优先级越高，越先被执行</p>
+</li>
+<li><p>select_type<br>  查询数据的操作类型，有如下</p>
+<blockquote>
+<ul>
+<li>simple<br>  简单查询，不包含子查询或union</li>
+<li>primary<br>  包含复杂的子查询，最外层查询标记为该值</li>
+<li>subquery<br>  在select或where里包含子查询，被标记为该值</li>
+<li>derived<br>  在from列表中包含的子查询被标记为该值，MySQL会递归执行这些子查询，把结果放在临时表</li>
+<li>union<br>  若第二个select出现在union之后，则被标记为该值<br>  若union包含在from的子查询中，外层select被标记为derived</li>
+<li>union result<br>  从union表获取结果的select</li>
+</ul>
+</blockquote>
+</li>
+<li><p>table<br>  显示该行数据是关于哪张表</p>
+</li>
+<li><p>partitions<br>  匹配的分区</p>
+</li>
+<li><p>type<br>  表的连接类型，其值、性能由高到底排列如下</p>
+<blockquote>
+<ul>
+<li>system<br>  表只有一行记录，相当于系统表</li>
+<li>const<br>  通过索引一次就找到，只匹配一行数据</li>
+<li>eq_ref<br>  唯一性索引扫描，对于每个索引键，表中只有一条记录与之匹配<br>  常用于主键或唯一索引扫描</li>
+<li>ref<br>  非唯一性索引扫描，返回匹配某个单独值的所有行<br>  用于=、&lt; 或 &gt; 操作符带索引的列</li>
+<li>range<br>  只检索给定范围的行，使用一个索引来选择行<br>  一般使用between、&gt;、&lt;</li>
+<li>index<br>  只遍历索引树</li>
+<li>ALL<br>  全表扫描，性能最差</li>
+</ul>
+</blockquote>
+<p>  前5种情况都是理想的索引的情况。通常优化至少到range级别，最好能优化到ref。</p>
+</li>
+<li><p>possible_keys<br>  指出 MySQL 使用哪个索引在该表找到行记录。如果该值为 NULL，说明没有使用索引，可以建立索引提高性能</p>
+</li>
+<li><p>key<br>  显示 MySQL 实际使用的索引。如果为 NULL，则没有使用索引查询</p>
+</li>
+<li><p>key_len<br>  表示索引中使用的字节数，通过该列计算查询中使用的索引的长度。在不损失精确性的情况下，长度越短越好显示的是索引字段的最大长度，并非实际使用长度</p>
+</li>
+<li><p>ref<br>  显示该表的索引字段关联了哪张表的哪个字段</p>
+</li>
+<li><p>rows<br>  根据表统计信息及选用情况，大致估算出找到所需的记录或所需读取的行数，数值越小越好</p>
+</li>
+<li><p>filtered<br>  返回结果的行数占读取行数的百分比，值越大越好</p>
+</li>
+<li><p>extra<br>  包含不适合在其他列中显示但十分重要的额外信息。常见的值如下</p>
+<blockquote>
+<ul>
+<li>using filesort<br>  MySQL会对数据使用一个外部的索引排序，而不是按照表内的索引顺序进行读取<br>  <strong>若出现有该值，应该优化SQL语句</strong></li>
+<li>using temporary<br>  使用临时表保存中间结果，比如，MySQL在对查询结果排序时使用临时表<br>  常见于order by和group by<br>  <strong>若出现有该值，应该优化SQL语句</strong></li>
+<li>using index<br>  表示select操作使用了覆盖索引，避免了访问表的数据行，效率不错</li>
+<li>using where<br>  where 子句用于限制哪一行</li>
+<li>using join buffer<br>  使用连接缓存</li>
+<li>distinct<br>  发现第一个匹配后，停止为当前的行组合搜索更多的行</li>
+</ul>
+</blockquote>
+</li>
+</ul>
+<h4 id="如何处理慢查询"><a href="#如何处理慢查询" class="headerlink" title="如何处理慢查询"></a>如何处理慢查询</h4><p>在业务系统中，除了使用主键继续进行的查询，其他的查询都会在测试库上测试查询耗时，一般会定期统级慢查询。</p>
+<p>慢查询的原因一般有：</p>
+<ul>
+<li>查询了多余不需要的列</li>
+<li>查询条件没有命中索引</li>
+<li>表的数据量太大</li>
+</ul>
+<p>针对这些原因，一般有以下解决方法：</p>
+<ul>
+<li>分析语句是否查询了额外的数据，将多余的列排除掉，重写语句</li>
+<li>分析语句的执行计划，获得索引的使用情况，之后修改语句或索引，使语句尽可能命中索引</li>
+<li>数据量太大时，语句的优化已经无法再进行了，这时可以考虑横向或纵向分表</li>
+</ul>
+<h4 id="事务的原则和隔离级别"><a href="#事务的原则和隔离级别" class="headerlink" title="事务的原则和隔离级别"></a>事务的原则和隔离级别</h4><p><strong>事务原则（ACID）</strong>：</p>
+<ul>
+<li>原子性（Atomicity）：原子性是指事务是一个不可分割的工作单位，事务中的操作要么都发生，要么都不发生。</li>
+<li>一致性（Consistency）：事务前后数据的正确性必须保持一致。</li>
+<li>隔离性（Isolation）：指一个事务的修改在最终提交前，对其他事务是不可见的。</li>
+<li>持久性（Durability）：持久性是指一个事务一旦被提交，它对数据库中数据的改变就是永久性的，接下来即使数据库发生故障也不应该对其有任何影响。</li>
+</ul>
+<p><strong>隔离级别</strong>：</p>
+<ul>
+<li><p>Read Uncommitted：读未提交，可能会读到其他事务<strong>未提交</strong>的数据，也叫脏读。</p>
+<p>  用户本来应该读取到id=1的用户age应该是10，然而读取到了其他事务还没有提交的事务，结果读取到age=20，这就是脏读。</p>
+</li>
+<li><p>Read Committed：读已提交，Oracle的默认级别，两次读取的结果不一致，也叫不可重复读。</p>
+<p>  不可重复读解决了脏读的问题，它只会读取已经提交的事务。</p>
+<p>  用户开启了一个事务读取id=1用户，查询到age=10，再次读取时，因为其他事务对age的修改被提交了，读取结果age=20，在同一个事务里同一个查询读取到不同的结果叫做不可重复读。</p>
+<p>  如果需要避免不可重复读，可以为事务加读锁。</p>
+</li>
+<li><p>Repeatable Read：可重复读，在RC级别之上，MySQL的默认级别，事务A在读取时，即时事务B对正在读取的记录提交了修改，在事务A没有结束的期间，读到的依然是未被事务B修改前的数据；在范围查询且有数据被插入时，会发生幻读。</p>
+</li>
+<li><p>Serializable：串行化，一般不会使用，它会给每一行读取的数据加锁，会导致大量超时和锁竞争的问题。</p>
+</li>
+</ul>
+<blockquote>
+<p>脏读（Dirty Read）：指一个事务读取了另一个事务未提交的数据。</p>
+<p>不可重复读（Non-repeatable Read）：在一个事务内读取表中的某一行数据，多次读取结果不同。（这个不一定是错误，可能是某些场合不对）</p>
+<p>虚读/幻读（Phantom Read）：是指一个事务内读取到了别的事务插入的数据，导致前后读取不一致。（一般是行影响，会导致多出一行）</p>
+</blockquote>
+<p>MySQL的MVCC机制在RC和RR级别下，会针对select查询生成一个Read View；</p>
+<p>RC级别下事务中每次select都会更新Read View，使得每次有事务提交修改时都会看到修改后的数据；</p>
+<p>而RR级别下一个事务只在第一次select的时候会获取一次Read view，在这个事务未提交前事务中所有的select都会复用这个Read View，这样每次读到的就是一样的，但如果在范围读取时有别的事务提交了一个insert，下一次select时就会将新插入的数据读取出来，从而产生幻读，MySQL的MVCC机制使用了快照读和next-key lock当前读解决了幻读的问题。</p>
+<h4 id="ACID靠什么保证"><a href="#ACID靠什么保证" class="headerlink" title="ACID靠什么保证"></a>ACID靠什么保证</h4><p>原子性由undo log日志保证，undo log记录了需要回滚的日志信息，事务回滚时会执行已成功SQL对应的反向SQL语句。</p>
+<p>一致性由其他三大特性保证，在程序代码中要保证业务上的一致性。</p>
+<p>隔离性由MVCC机制来保证。</p>
+<p>持久性由内存+redo log保证，MySQL修改数据会同时在内存和redo log记录这次操作，宕机时可以从redo log恢复。</p>
+<blockquote>
+<p>InnoDB redo log写盘，InnoDB事务进入prepare状态。</p>
+<p>如果前面prepare成功，bin log写盘，再继续将事务日志持久化到bin log。</p>
+<p>如果持久化成功，那么InnoDB事务则进入commit状态（在redo log中写一个commit记录）</p>
+</blockquote>
+<p>redo log的刷盘会在系统空闲时进行</p>
+<h4 id="MVCC-MCC-多版本并发控制"><a href="#MVCC-MCC-多版本并发控制" class="headerlink" title="MVCC/MCC - 多版本并发控制"></a>MVCC/MCC - 多版本并发控制</h4><p>Multiversion Concurrency Control - 多版本并发控制</p>
+<p>读取数据时通过一种类似快照的方式将数据保存下来，这样读锁和写锁就不会发生冲突，不同事务session会看到自己特定版本的数据，会有一个版本链的概念。</p>
+<p>MVCC只在RC（读已提交）和RR（可重复读）两个隔离级别下工作，其他两个隔离级别和MVCC不兼容，RU（读未提交）总是读取最新的数据行，而不是符合当前事务版本的数据行，SERIALIZABLE（串行化）则会对所有读取的行都加锁。</p>
+<p>聚簇索引记录中由两个必要的隐藏列：</p>
+<p><strong>trx_id</strong>：用来了存储每次对某条聚簇索引记录进行修改的事务的id。</p>
+<p><strong>roll_pointer</strong>：每次对某条聚簇索引记录修改时，都会将上一个版本写入undo log中。这个roll_pointer存储了一个指针，指向了这条聚簇索引记录的上一个版本的地址，通过它来获得上一个版本的记录信息。（插入操作的undo log没有这个属性，因为insert不存在上一个版本）</p>
+<p><img src="https://gitee.com/graytang/img-repo/raw/master/img/202109241439590.png"></p>
+<p><strong>读已提交和可重复读的区别就在于他们生成ReadView的策略不同。</strong></p>
+<p>开始事务时创建ReadView，ReadView维护了当前活动的事务id，即未提交的事务id，排序生成一个数组。</p>
+<p>访问数据，获取数据中的事务id（获取的是事务id最大的记录），对比ReadView；</p>
+<p>如果id在ReadView数组的左边（比ReadView中的事务id都小），则意味着该事务已被提交，可以访问。</p>
+<p>如果id在ReadView右边（比ReadView中的事务id都大）或就在ReadView中，则不可以访问，获取roll_pointer，取上一个版本重新对比。（在右边意味着该事务在ReadView生成后才出现，在ReadView中则意味着该事务还未提交）</p>
+<p>RC级别下的事务在每次select开始都会生成一个独立的ReadView，而RR级别则在第一次select时生成一个事务中唯一的ReadView，之后事务中的select都会复用这个事务中唯一的ReadView。</p>
+<p>总结：MySQL的MVCC，通过版本链，实现多版本，可并发读写；通过ReadView生成策略的不同实现不同的隔离级别。</p>
+<h4 id="MySQL主从同步原理"><a href="#MySQL主从同步原理" class="headerlink" title="MySQL主从同步原理"></a>MySQL主从同步原理</h4><p>MySQL的主从复制中主要由三个线程：</p>
+<ul>
+<li>master（binlog dump thread）</li>
+<li>slave（I/O thread、SQL thrad）</li>
+</ul>
+<p>master一条、slave两条</p>
+<p>执行要点：</p>
+<ol>
+<li>主节点binlog，binlog是数据库服务器启动的那一刻起，保存了所有数据库结构或内容变更记录的一个文件。</li>
+<li>主节点log dump线程，当binlog发生更改时，log dump线程会读取其内容并发送给从节点。</li>
+<li>从节点I/O线程接收binlog内容，并将其写入relay log（中继日志）文件中。</li>
+<li>从节点SQL线程读取relay log文件内容，将主库binlog中复制过来的内容在从库上进行重放，最终保证主从数据库的一致性。</li>
+</ol>
+<p>注：主从节点使用binlog文件+position偏移量来定位主从同步的位置，从节点会保存已接收到的偏移量，如果从节点发生宕机重启，则会从position的位置发起同步。</p>
+<blockquote>
+<p>由于MySQL默认的复制方式是异步的，主库将binlog发送给从库后不会关心从库是否已经接收，这样会产生一个，即主库挂了，从库也接收失败了，这时从库升为主库后，log就丢失了，由此产生以下两个概念。</p>
+</blockquote>
+<p><strong>全同步复制</strong></p>
+<p>主库写入binlog后强制同步日志到从库，当所有从库都接收完成返回ACK（Acknowledge character，即确认字符）给主库后，主库才会返回给客户端，但这种方式在从库数量较多时性能会受到严重影响。</p>
+<p><strong>半同步复制</strong></p>
+<p>从库写入relay log后返回ACK给主库，主库只需收到至少一个从库的确认就认为同步操作执行成功。</p>
+]]></content>
+      <categories>
+        <category>学习笔记</category>
+        <category>数据库</category>
+        <category>MySQL</category>
+      </categories>
+      <tags>
+        <tag>MySQL</tag>
+        <tag>MyBatis</tag>
+      </tags>
+  </entry>
+  <entry>
     <title>Spring知识点</title>
     <url>/2021/10/18/Spring%E7%9F%A5%E8%AF%86%E7%82%B9/</url>
-    <content><![CDATA[<h3 id="Spring"><a href="#Spring" class="headerlink" title="Spring"></a>Spring</h3><p>Spring是一个轻量级的开源的J2EE框架。它是容器也是框架，可以存放JavaBean，也可以作为中间层，在整合其他框架组件起到一个连接的作用。</p>
+    <content><![CDATA[<h4 id="Spring简介"><a href="#Spring简介" class="headerlink" title="Spring简介"></a>Spring简介</h4><p>Spring是一个轻量级的开源的J2EE框架。它是容器也是框架，可以存放JavaBean，也可以作为中间层，在整合其他框架组件起到一个连接的作用。</p>
 <p>Spring是一个拥有IoC控制反转和AOP面向切面特性的容器框架</p>
 <ul>
 <li>从大小和开销而言Spring都是轻量级的</li>
