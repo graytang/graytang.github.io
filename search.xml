@@ -267,59 +267,6 @@
       </tags>
   </entry>
   <entry>
-    <title>悲观/乐观锁简述</title>
-    <url>/2021/10/18/%E9%94%81%E7%AE%80%E8%BF%B0/</url>
-    <content><![CDATA[<h3 id="锁机制"><a href="#锁机制" class="headerlink" title="锁机制"></a>锁机制</h3><p>锁的四种状态：无锁、偏向锁、轻量级锁、重量级锁</p>
-<h4 id="悲观锁"><a href="#悲观锁" class="headerlink" title="悲观锁"></a>悲观锁</h4><p>悲观锁在调用资源时，会悲观的认为所有访问该资源的线程都会对其进行修改，因此需要严格同步线程的调用，在操作数据时会直接把资源锁住，只让一个线程进行调用，直到操作完成后再释放锁，上锁期间其他线程无法修改资源；</p>
-<p>互斥锁就是悲观锁的一种，Java中的synchronized就是互斥锁；</p>
-<p>但在有些场景下，可能多个线程对某个资源的调用大部分都是读取操作，就没有必要每次调用时都对资源进行锁定；</p>
-<p>而因为线程的切换是会产生操作系统用户态与内核态的切换的，所以有时同步代码块执行的耗时可能会远远小于线程切换的耗时，这就有点本末倒置了。</p>
-<h4 id="乐观锁"><a href="#乐观锁" class="headerlink" title="乐观锁"></a>乐观锁</h4><p>乐观锁在调用资源时非常乐观，认为访问该资源的线程都不会对其进行修改，因此乐观锁其实是一种不会锁定资源的思想。</p>
-<span id="more"></span>
-
-
-
-<h3 id="CAS（Compare-and-Swap）"><a href="#CAS（Compare-and-Swap）" class="headerlink" title="CAS（Compare and Swap）"></a>CAS（Compare and Swap）</h3><p>CAS（Compare and Swap）比较并交换是乐观锁的实现，是一种非阻塞的同步机制；</p>
-<p>当多个线程同时访问一个资源时，每个线程都会产生三个操作数：</p>
-<ul>
-<li>调用的资源的内存位置（V）</li>
-<li>资源未修改前原本的值（A）</li>
-<li>需要写入的新值（B）</li>
-</ul>
-<p>线程会比较得到的值是否和指定位置资源的值一致，如果一致则将资源的值修改为新的值，否则进入自旋重试，直到操作成功或达到自旋终止次数而放弃操作；</p>
-<p>自旋的次数可以通过启动参数进行修改，默认的自旋次数是10，以防止发生死循环；</p>
-<h4 id="CAS的原子性是如何实现的"><a href="#CAS的原子性是如何实现的" class="headerlink" title="CAS的原子性是如何实现的"></a>CAS的原子性是如何实现的</h4><p>CAS中包含比较和交换两个动作，但必须保证这两个动作的原子性，否则无法保证线程同步；</p>
-<p>CAS的原子性由CPU来提供硬件级别的同步原语支持，而无需使用操作系统的同步原语mutex进行上锁；</p>
-<p>不同平台架构的CPU的CAS指令也不一样，x86中的是<code>cmpxchg</code>，而在arm下的是<code>LL/SC</code>；</p>
-<h4 id="Java中是如何实现CAS操作的"><a href="#Java中是如何实现CAS操作的" class="headerlink" title="Java中是如何实现CAS操作的"></a>Java中是如何实现CAS操作的</h4><p>Java提供了AtomicInteger、AtomicBoolean等基本数据类型的原子类来实现CAS操作；</p>
-<p>这些原子类的CAS实现底层是调用了对应平台的本地方法，本地方法是C++编写的，在C++的本地方法中会调用汇编命令来实现CAS操作；</p>
-<h5 id="ABA问题"><a href="#ABA问题" class="headerlink" title="ABA问题"></a>ABA问题</h5><p>假设线程1和线程2按照以下顺序执行：</p>
-<ol>
-<li>线程1读取到内存中的资源值为A</li>
-<li>线程2读取到内存中的资源值，并将其修改为B</li>
-<li>线程2再次将资源值改为A</li>
-<li>线程1对资源进行CAS操作</li>
-</ol>
-<p>在第4步中，由于资源的值依旧为A，因此CAS操作成功，实际上该资源的值已经被线程B修改过了，这就是ABA问题，在某些场景下ABA问题会带来隐患；</p>
-<p>对ABA问题，比较有效的解决方案是引入版本号机制，资源的值每发生一次变化都对版本号进行更新，在CAS操作时会同时比较版本号和资源的值，只有当两者都没有发生变化时，CAS才能执行成功；</p>
-<h4 id="优缺点和适用场景"><a href="#优缺点和适用场景" class="headerlink" title="优缺点和适用场景"></a>优缺点和适用场景</h4><p><strong>1.使用限制</strong></p>
-<p>与悲观锁相比，乐观锁的适用场景受到了更多的限制，例如：CAS只能保证对单个变量操作时的原子性，当涉及到多个变量时，CAS就没有办法处理了，synchronized则可以对代码块进行加锁处理，而且乐观锁的实现方式更为复杂</p>
-<p><strong>2.读写是否频繁</strong></p>
-<p>在悲观锁和乐观锁都能使用的情况下，我们需要对资源的读写操作是否频繁来进行考虑：</p>
-<ul>
-<li>当读操作的频率比较高，写操作的频率比较低时，乐观锁更有优势，因为悲观锁会锁住代码块或数据，致使其他线程无法同时访问，影响并发，并且上锁和释放锁都需要消耗额外的资源；</li>
-<li>当写操作的频率比较高时，悲观锁更有优势，乐观锁在执行更新时如果失败，会不断的自旋重试，线程自旋时CPU相当于在空转，非常浪费CPU资源；</li>
-</ul>
-]]></content>
-      <categories>
-        <category>学习笔记</category>
-        <category>锁</category>
-      </categories>
-      <tags>
-        <tag>锁</tag>
-      </tags>
-  </entry>
-  <entry>
     <title>线程知识点</title>
     <url>/2021/10/18/%E7%BA%BF%E7%A8%8B%E7%9F%A5%E8%AF%86%E7%82%B9/</url>
     <content><![CDATA[<h3 id="线程"><a href="#线程" class="headerlink" title="线程"></a>线程</h3><h4 id="生命周期"><a href="#生命周期" class="headerlink" title="生命周期"></a>生命周期</h4><ol>
@@ -408,6 +355,271 @@
       </categories>
       <tags>
         <tag>线程</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>悲观/乐观锁简述</title>
+    <url>/2021/10/18/%E9%94%81%E7%AE%80%E8%BF%B0/</url>
+    <content><![CDATA[<h3 id="锁机制"><a href="#锁机制" class="headerlink" title="锁机制"></a>锁机制</h3><p>锁的四种状态：无锁、偏向锁、轻量级锁、重量级锁</p>
+<h4 id="悲观锁"><a href="#悲观锁" class="headerlink" title="悲观锁"></a>悲观锁</h4><p>悲观锁在调用资源时，会悲观的认为所有访问该资源的线程都会对其进行修改，因此需要严格同步线程的调用，在操作数据时会直接把资源锁住，只让一个线程进行调用，直到操作完成后再释放锁，上锁期间其他线程无法修改资源；</p>
+<p>互斥锁就是悲观锁的一种，Java中的synchronized就是互斥锁；</p>
+<p>但在有些场景下，可能多个线程对某个资源的调用大部分都是读取操作，就没有必要每次调用时都对资源进行锁定；</p>
+<p>而因为线程的切换是会产生操作系统用户态与内核态的切换的，所以有时同步代码块执行的耗时可能会远远小于线程切换的耗时，这就有点本末倒置了。</p>
+<h4 id="乐观锁"><a href="#乐观锁" class="headerlink" title="乐观锁"></a>乐观锁</h4><p>乐观锁在调用资源时非常乐观，认为访问该资源的线程都不会对其进行修改，因此乐观锁其实是一种不会锁定资源的思想。</p>
+<span id="more"></span>
+
+
+
+<h3 id="CAS（Compare-and-Swap）"><a href="#CAS（Compare-and-Swap）" class="headerlink" title="CAS（Compare and Swap）"></a>CAS（Compare and Swap）</h3><p>CAS（Compare and Swap）比较并交换是乐观锁的实现，是一种非阻塞的同步机制；</p>
+<p>当多个线程同时访问一个资源时，每个线程都会产生三个操作数：</p>
+<ul>
+<li>调用的资源的内存位置（V）</li>
+<li>资源未修改前原本的值（A）</li>
+<li>需要写入的新值（B）</li>
+</ul>
+<p>线程会比较得到的值是否和指定位置资源的值一致，如果一致则将资源的值修改为新的值，否则进入自旋重试，直到操作成功或达到自旋终止次数而放弃操作；</p>
+<p>自旋的次数可以通过启动参数进行修改，默认的自旋次数是10，以防止发生死循环；</p>
+<h4 id="CAS的原子性是如何实现的"><a href="#CAS的原子性是如何实现的" class="headerlink" title="CAS的原子性是如何实现的"></a>CAS的原子性是如何实现的</h4><p>CAS中包含比较和交换两个动作，但必须保证这两个动作的原子性，否则无法保证线程同步；</p>
+<p>CAS的原子性由CPU来提供硬件级别的同步原语支持，而无需使用操作系统的同步原语mutex进行上锁；</p>
+<p>不同平台架构的CPU的CAS指令也不一样，x86中的是<code>cmpxchg</code>，而在arm下的是<code>LL/SC</code>；</p>
+<h4 id="Java中是如何实现CAS操作的"><a href="#Java中是如何实现CAS操作的" class="headerlink" title="Java中是如何实现CAS操作的"></a>Java中是如何实现CAS操作的</h4><p>Java提供了AtomicInteger、AtomicBoolean等基本数据类型的原子类来实现CAS操作；</p>
+<p>这些原子类的CAS实现底层是调用了对应平台的本地方法，本地方法是C++编写的，在C++的本地方法中会调用汇编命令来实现CAS操作；</p>
+<h5 id="ABA问题"><a href="#ABA问题" class="headerlink" title="ABA问题"></a>ABA问题</h5><p>假设线程1和线程2按照以下顺序执行：</p>
+<ol>
+<li>线程1读取到内存中的资源值为A</li>
+<li>线程2读取到内存中的资源值，并将其修改为B</li>
+<li>线程2再次将资源值改为A</li>
+<li>线程1对资源进行CAS操作</li>
+</ol>
+<p>在第4步中，由于资源的值依旧为A，因此CAS操作成功，实际上该资源的值已经被线程B修改过了，这就是ABA问题，在某些场景下ABA问题会带来隐患；</p>
+<p>对ABA问题，比较有效的解决方案是引入版本号机制，资源的值每发生一次变化都对版本号进行更新，在CAS操作时会同时比较版本号和资源的值，只有当两者都没有发生变化时，CAS才能执行成功；</p>
+<h4 id="优缺点和适用场景"><a href="#优缺点和适用场景" class="headerlink" title="优缺点和适用场景"></a>优缺点和适用场景</h4><p><strong>1.使用限制</strong></p>
+<p>与悲观锁相比，乐观锁的适用场景受到了更多的限制，例如：CAS只能保证对单个变量操作时的原子性，当涉及到多个变量时，CAS就没有办法处理了，synchronized则可以对代码块进行加锁处理，而且乐观锁的实现方式更为复杂</p>
+<p><strong>2.读写是否频繁</strong></p>
+<p>在悲观锁和乐观锁都能使用的情况下，我们需要对资源的读写操作是否频繁来进行考虑：</p>
+<ul>
+<li>当读操作的频率比较高，写操作的频率比较低时，乐观锁更有优势，因为悲观锁会锁住代码块或数据，致使其他线程无法同时访问，影响并发，并且上锁和释放锁都需要消耗额外的资源；</li>
+<li>当写操作的频率比较高时，悲观锁更有优势，乐观锁在执行更新时如果失败，会不断的自旋重试，线程自旋时CPU相当于在空转，非常浪费CPU资源；</li>
+</ul>
+]]></content>
+      <categories>
+        <category>学习笔记</category>
+        <category>锁</category>
+      </categories>
+      <tags>
+        <tag>锁</tag>
+      </tags>
+  </entry>
+  <entry>
+    <title>Linux常用操作</title>
+    <url>/2021/10/18/Linux%E5%B8%B8%E7%94%A8%E6%93%8D%E4%BD%9C/</url>
+    <content><![CDATA[<h2 id="Vim"><a href="#Vim" class="headerlink" title="Vim"></a>Vim</h2><h3 id="Vim的常用模式"><a href="#Vim的常用模式" class="headerlink" title="Vim的常用模式"></a>Vim的常用模式</h3><p><strong>正常模式（命令模式）</strong></p>
+<p>使用vim打开一个文件，默认进入正常模式；正常模式中可以使用上下左右移动光标，可以对文件进行删除字符、删除整行、复制和粘贴等操作。</p>
+<p><strong>插入模式（输入模式）</strong></p>
+<p>按下<code>i</code>后进入插入模式，该模式下可以直接对文件进行编辑，可以使用<code>ESC</code>退回到正常模式。</p>
+<p><strong>命令行模式（底线命令模式）</strong></p>
+<p>在正常模式下输入<code>:</code>进入命令行模式，该模式下可以进行读取、保存、替换、退出vim、显示行号等操作。</p>
+<span id="more"></span>
+
+
+
+<h3 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h3><p>**==打开文件==**：在Linux终端中输入<code>vim f_name</code>，使用vim打开指定文件，默认为正常模式；</p>
+<p>**==退出vim==**：</p>
+<p><code>:wq</code> - 在命令行模式中输入wq，会写入（保存）文件并退出，可以单独使用<code>w</code>保存文件；</p>
+<p><code>:q</code> - 正常退出；</p>
+<p><code>:q!</code> - 强制退出，不会保存文件，<code>!</code>可以和<code>w</code>之类的命令配合使用；</p>
+<p>**==复制粘贴==**：</p>
+<p><strong>单行复制</strong> - 在正常模式中输入<code>yy</code>，拷贝当前光标所在行；</p>
+<p><strong>多行复制</strong> - 输入<code>rowNum+yy</code>，拷贝包括光标所在行的rowNum行；例如<code>3yy</code>，复制光标所在行和所在行的下方两行，共三行；</p>
+<p><strong>粘贴</strong> - 移动光标到需要粘贴的位置，输入<code>p</code>，完成粘贴；</p>
+<p>==<strong>删除</strong>==：</p>
+<p><strong>单行删除</strong> - 输入<code>dd</code>，删除当前光标所在行；</p>
+<p><strong>多行删除</strong> - <code>rowNum+dd</code>，和多行复制相同的逻辑；</p>
+<p>==<strong>查找关键字</strong>==：</p>
+<p><strong>顺序查找</strong></p>
+<p>在正常模式下输入<code>/</code>进入查找模式，输入对应关键词按下回车进行查找，在查找过程中按下<code>n</code>会匹配下一个，按下<code>N</code>即shift+n匹配上一个；</p>
+<p>重新输入<code>/</code>会清空当前关键字，重新输入关键字再次进行查找，按下退格键删除<code>/</code>退出查找；</p>
+<p>退出查找后，命令行模式输入<code>noh</code>可以取消查找关键字的高亮；</p>
+<p><strong>反向查找</strong> - 输入<code>?</code>进入反向查找，输入关键字并回车后，按下<code>n</code>会匹配上一个；</p>
+<p>==<strong>行号</strong>==：</p>
+<p><strong>显示行号</strong> - 在命令行模式输入<code>set nu</code>，开启行号显示；</p>
+<p><strong>取消显示</strong> - 输入<code>set nonu</code>，关闭行号显示；</p>
+<p>**==首尾行跳转==**：</p>
+<p>正常模式下输入<code>gg</code>使光标跳转到文件首行，输入<code>G</code>使光标跳转到文件尾行；</p>
+<p>**==撤销/重做==**：</p>
+<p><strong>撤销</strong> - 在正常模式下输入<code>u</code>可以撤销之前的动作；</p>
+<p><strong>重做</strong> - 撤销后再输入<code>Ctrl+r</code>可以恢复撤销的动作；</p>
+<p>**==快速跳转==**：在正常模式下，输入<code>rowNum</code>后，再输入<code>shift+g</code>，可以将光标快速移动到指定行；例如：5 -&gt; shift+g，快速跳转到第5行；</p>
+<p>**==翻页==**：</p>
+<p><code>Ctrl+u</code>：向前翻半页；</p>
+<p><code>Ctrl+d</code>：向后翻半页；</p>
+<p><code>Ctrl+b</code>：向前翻一页；</p>
+<p><code>Ctrl+f</code>：向后翻一页。</p>
+<p>其他：</p>
+<p><img src="https://gitee.com/graytang/img-repo/raw/master/img/202110181724867.gif"></p>
+<h2 id="Linux命令"><a href="#Linux命令" class="headerlink" title="Linux命令"></a>Linux命令</h2><h4 id="关机-amp-重启"><a href="#关机-amp-重启" class="headerlink" title="关机&amp;重启"></a>关机&amp;重启</h4><p><code>shutdown -h now</code>：立即关机，-h代表halt停止，now表示立即</p>
+<p><code>shutdown -h countdown</code>：指定倒计时后关机，countdown表示指定的倒计时，例如：<strong>shutdown -h 1</strong>，指定1分钟后关机；</p>
+<p>可以携带message，例如：**shutdown -h 1 “1分钟后关机”**，携带的message：”1分钟后关机”，会通知到当前所有登录到Linux终端的用户；</p>
+<p><code>shutdown</code>：等效于<strong>shutdown -h 1</strong>；</p>
+<p><code>shutdown -r now</code>：立即重启，-r代表reboot重新启动；</p>
+<p><code>halt</code>：等效于<strong>shutdown -h now</strong>；</p>
+<p><code>reboot</code>：等效于<strong>shutdown -r now</strong>；</p>
+<p><code>sync</code>：==将内存中的数据同步到磁盘，关机或重启前必须运行该命令，防止数据丢失==；</p>
+<h4 id="切换目录"><a href="#切换目录" class="headerlink" title="切换目录"></a>切换目录</h4><p>cd：change directory</p>
+<p><code>cd ..</code>：返回上一级目录</p>
+<p><code>cd ../..</code>：返回上两级目录</p>
+<p><code>cd或cd ~</code>：返回home目录</p>
+<p><code>cd 目录名</code>：切换指定目录</p>
+<h4 id="当前用户所在目录"><a href="#当前用户所在目录" class="headerlink" title="当前用户所在目录"></a>当前用户所在目录</h4><p>pwd：print work directory</p>
+<p><code>pwd</code>：使用该命令可以显示当前所在的目录的层级；</p>
+<h4 id="列出目录"><a href="#列出目录" class="headerlink" title="列出目录"></a>列出目录</h4><p><code>ls</code>：列出当前目录或指定目录下的文件</p>
+<p>-a 参数：all，查看所有文件，包括隐藏文件</p>
+<p>-l 参数：查看文件详细信息，包含属性和权限，如果想单独使用该参数可以将<code>ls</code>简写成<code>ll</code></p>
+<h4 id="创建文件"><a href="#创建文件" class="headerlink" title="创建文件"></a>创建文件</h4><p><code>touch 文件</code>：创建一个文件，默认在当前目录下创建，也可以在指定目录下创建，touch的另一个作用是更改一个文件或目录的时间</p>
+<h4 id="创建文件夹"><a href="#创建文件夹" class="headerlink" title="创建文件夹"></a>创建文件夹</h4><p>mkdir：make directory</p>
+<p><code>mkdir 文件夹名称</code>：在当前目录下创建一个文件夹</p>
+<p>-p 参数：创建层级目录，例如：mkdir -p test1/test2/test3</p>
+<h4 id="查看文件内容"><a href="#查看文件内容" class="headerlink" title="查看文件内容"></a>查看文件内容</h4><p><code>cat 文件名</code>：从第一行开始显示文件内容，用于读取代码或配置等含文本文件</p>
+<p><code>tac 文件名</code>：cat的倒置，从最后一行开始显示</p>
+<p><code>nl 文件名</code>：携带行号显示文件内容，会忽略空行的行号计数</p>
+<p><code>more 文件名</code>：分页显示文件内容，只能向后滚动，空格进入下一页，回车进入下一行，查看过程中使用命令<code>:f</code>可以显示当前页尾行行号，按q退出查看</p>
+<p><code>less 文件名</code>：作用和more类似，但是可以向前滚动，上下键可以前进或后退一行，也可以使用pageUp和pageDown键进行前后翻页，查看过程中可以使用<code>/关键字</code>匹配关键字进行向下查找，<code>?关键字</code>向上查找，使用方式和上下匹配的快捷键和vim一致</p>
+<p><code>head [选项] [行数] 文件名</code>：可以查看文件的头几行，不携带选项参数默认显示10行，可以通过<code>-n</code>参数+行数查看指定的头部几行</p>
+<p><code>tail [选项] [行数] 文件名</code>：查看文件尾部几行，使用方式和head一样</p>
+<h4 id="硬链接-软（符号）链接"><a href="#硬链接-软（符号）链接" class="headerlink" title="硬链接/软（符号）链接"></a>硬链接/软（符号）链接</h4><p>Linux下的链接文件有点类似于Windows中的快捷方式，但是有几点不同，分为硬链接和软链接；</p>
+<p><strong>硬链接</strong>：假设有个A文件，我们对其使用命令创建了一个硬链接B文件。</p>
+<p>对硬链接文件查看文件属性可以看到，硬链接的文件类型列的标识是<code>-</code>，也就是一个普通文件。</p>
+<p>由于硬链接是直接指向物理存储的数据块地址的，所以删除A文件，B文件依然可以读取出文件中原本的内容。</p>
+<p>作用在于允许一个文件拥有多个路径，用户可以通过这种机制对一些重要文件使用硬链接，防止误删。</p>
+<p><strong>软链接</strong>：软链接也称符号链接，就和Windows中的快捷方式完全一样，指向的是源文件，对其查看文件属性也可以看到文件类型列的标识是<code>l</code>，也就是一个单纯的链接文件，删除了源文件后软链接则无法进行访问。</p>
+<p><code>ln [选项] 源文件 链接文件</code>：该命令可以为文件创建链接，默认创建硬链接，使用<code>-s</code>选项参数可以创建软链接。</p>
+<h4 id="删除命令"><a href="#删除命令" class="headerlink" title="删除命令"></a>删除命令</h4><p><code>rm [选项] 文件或目录</code>：删除文件或目录，可以使用正则表达式</p>
+<p><img src="https://gitee.com/graytang/img-repo/raw/master/img/202110181726212.png"></p>
+<p>“rm -f” 强行删除，忽略不存在的文件，不提示确认。(f为force的意思)<br>“rm -i” 进行交互式删除，即删除时会提示确认。(i为interactive的意思)<br>“rm -r” 将参数中列出的全部目录和子目录进行递归删除。(r为recursive的意思)<br>“rm -v” 详细显示删除操作进行的步骤。(v为verbose的意思)</p>
+<h4 id="拷贝命令"><a href="#拷贝命令" class="headerlink" title="拷贝命令"></a>拷贝命令</h4><p><code>cp 拷贝文件 目标目录</code>：拷贝文件到目标目录中</p>
+<h4 id="移动-重命名文件"><a href="#移动-重命名文件" class="headerlink" title="移动/重命名文件"></a>移动/重命名文件</h4><p><code>mv [选项] 源文件... 目的地/</code>：移动文件到指定目录</p>
+<ul>
+<li><strong>-b</strong>: 当目标文件或目录存在时，在执行覆盖前，会为其创建一个备份。</li>
+<li><strong>-i</strong>: 如果指定移动的源目录或文件与目标的目录或文件同名，则会先询问是否覆盖旧文件，输入 y 表示直接覆盖，输入 n 表示取消该操作。</li>
+<li><strong>-f</strong>: 如果指定移动的源目录或文件与目标的目录或文件同名，不会询问，直接覆盖旧文件。</li>
+<li><strong>-n</strong>: 不要覆盖任何已存在的文件或目录。</li>
+<li><strong>-u</strong>：当源文件比目标文件新或者目标文件不存在时，才执行移动操作。</li>
+</ul>
+<p>mv命令可以在移动时修改文件名，例如：mv test.txt dir/test2.txt</p>
+<p>mv命令同样可以直接重命名文件，例如：mv test.txt test2.txt或mv dir dir2</p>
+<h4 id="换行"><a href="#换行" class="headerlink" title="换行"></a>换行</h4><p>Linux输入的参数过长时，可以在行尾使用<code>\</code>反斜杠+回车换行，代表下一行是续行。</p>
+<h4 id="解压"><a href="#解压" class="headerlink" title="解压"></a>解压</h4><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 直接在包所在的目录下解压</span></span><br><span class="line">tar -zxvf tar包名.tar.gz</span><br><span class="line"></span><br><span class="line"><span class="comment"># 解压至指定目录</span></span><br><span class="line">tar -zxvf tar包名.tar.gz -C 目录</span><br></pre></td></tr></table></figure>
+
+
+
+
+
+<h4 id="用户登录-amp-注销"><a href="#用户登录-amp-注销" class="headerlink" title="用户登录&amp;注销"></a>用户登录&amp;注销</h4><ol>
+<li>登录时尽量不要直接使用root帐号登录，因为它是系统管理员，最大的权限，避免操作失误。可以利用普通用户登录，登录后再用<code>su root</code>命令来切换成系统管理员身份。</li>
+<li>在终端下输入<code>logout</code>即可注销用户。</li>
+</ol>
+<p>注意：logout注销指令在图形运行级别无效，在运行级别3下有效。</p>
+<h4 id="运行级别"><a href="#运行级别" class="headerlink" title="运行级别"></a>运行级别</h4><blockquote>
+<p>0： 系统停机（关机）模式，系统默认运行级别不能设置为0，否则不能正常启动，一开机就自动关机。</p>
+<p>1：单用户模式，root权限，用于系统维护，禁止远程登陆，就像Windows下的安全模式登录。</p>
+<p>2：多用户模式，没有NFS网络支持。</p>
+<p>3：完整的多用户终端模式，有NFS，登陆后进入终端模式。</p>
+<p>4：系统未使用，保留一般不用，在一些特殊情况下可以用它来做一些事情。例如在笔记本电脑的电池用尽时，可以切换到这个模式来做一些设置。</p>
+<p>5：图形化模式，登陆后进入图形GUI模式或GNOME、KDE图形化界面，如X Window系统。</p>
+<p>6：重启模式，默认运行级别不能设为6，否则不能正常启动，就会一直开机重启开机重启。</p>
+</blockquote>
+<h4 id="指定运行级别"><a href="#指定运行级别" class="headerlink" title="指定运行级别"></a>指定运行级别</h4><p><code>init 运行级别</code>：使用该指令可以切换当前系统运行级别，该指令不会更改默认的运行级别；</p>
+<p><strong>设置默认运行级别</strong></p>
+<p>CentOS 7以后，将运行级别进行了简化：</p>
+<p>multi-user.target - 运行级别3</p>
+<p>graphical.target - 运行级别5</p>
+<p><code>systemctl get-default</code>：使用该指令可以获得当前系统默认运行级别；</p>
+<p><code>systemctl set-default TARGET.target</code>：使用该指令可以指定系统默认的运行级别，例如：<code>systemctl set-default multi-user.target</code>，将默认运行级别指定为3；</p>
+<h4 id="帮助指令"><a href="#帮助指令" class="headerlink" title="帮助指令"></a>帮助指令</h4><p><code>man 命令或配置文件</code>：使用该命令可以获得帮助信息，例如：<code>man ls</code>，可以获得ls指令的帮助信息；</p>
+<p><code>help 命令</code>：该指令可以获得shell内置命令的帮助信息；</p>
+<p>tip：命令帮助信息中显示的选项参数可以组合使用，例如：<code>ls -la</code>；</p>
+<h4 id="用户管理"><a href="#用户管理" class="headerlink" title="用户管理"></a>用户管理</h4><p>Linux系统是一个多用户多任务的分时操作系统，任何一个要使用系统资源的用户，都必须首先向系统管理员申请一个账号，然后以这个账号的身份进入系统。</p>
+<h5 id="添加用户"><a href="#添加用户" class="headerlink" title="添加用户"></a>添加用户</h5><p><code>useradd u_name</code>：使用该命令可以创建一个用户，创建用户后会默认在/home目录下生成一个用户文件夹，文件夹与username同名；</p>
+<p><code>useradd -d dir u_name</code>：-d代表在指定目录下生成用户文件夹，dir表示指定目录路径；</p>
+<h5 id="修改密码"><a href="#修改密码" class="headerlink" title="修改密码"></a>修改密码</h5><p><code>passwd u_name</code>：该命令可以修改指定用户的密码，如果不携带username参数，则默认为当前用户修改密码；</p>
+<h5 id="删除用户"><a href="#删除用户" class="headerlink" title="删除用户"></a>删除用户</h5><p><code>userdel u_name</code>：使用该命令可以删除指定用户，需要root权限，使用该命令删除用户时不会删除用户文件夹，需要同时删除用户文件夹需要加上参数<code>-r</code>，例如：<code>userdel -r u_name</code>，谨慎使用<code>-r</code>，一般情况下都建议保留用户文件夹；</p>
+<h5 id="查询用户信息"><a href="#查询用户信息" class="headerlink" title="查询用户信息"></a>查询用户信息</h5><p><code>id u_name</code>：该指令可以查询指定用户的id和group等信息；</p>
+<h5 id="切换用户"><a href="#切换用户" class="headerlink" title="切换用户"></a>切换用户</h5><p><code>su u_name</code>：该指令可以切换到指定的用户；</p>
+<p>注意：从权限高的用户切换到权限低的用户，不需要输入密码，相反则需要；当需要返回到之前的用户时，使用exit或logout指令；</p>
+<h5 id="查询首次登录用户"><a href="#查询首次登录用户" class="headerlink" title="查询首次登录用户"></a>查询首次登录用户</h5><p><code>whoami</code>：该指令可以查询我们首次登录系统时使用的是哪个用户；</p>
+<p><code>who am i</code>：作用同上，区别是会显示登录时间和使用哪个IP地址进行登录等信息；</p>
+<p><img src="https://gitee.com/graytang/img-repo/raw/master/img/202110181726779.png"></p>
+<h5 id="用户组"><a href="#用户组" class="headerlink" title="用户组"></a>用户组</h5><p>用户组类似于角色的概念，系统可以将拥有共性或相同权限的多个用户分配到一个组进行统一的管理</p>
+<p><code>groupadd g_name</code>：新增一个指定groupname的组；</p>
+<p><code>groupdel g_name</code>：删除一个指定的组；</p>
+<h5 id="添加用户时指定组"><a href="#添加用户时指定组" class="headerlink" title="添加用户时指定组"></a>添加用户时指定组</h5><p><code>useradd -g g_name u_name</code>：-g参数表示在添加用户时分配组；</p>
+<p>注意：添加用户时如果不分配组，默认会创建一个组名和用户名相同的组，并将用户分配到该组。</p>
+<h5 id="修改指定用户的组"><a href="#修改指定用户的组" class="headerlink" title="修改指定用户的组"></a>修改指定用户的组</h5><p><code>usermod -g g_name u_name</code>：usermod修改用户，携带-g参数时可以修改用户的组；</p>
+<h5 id="用户-组相关文件"><a href="#用户-组相关文件" class="headerlink" title="用户/组相关文件"></a>用户/组相关文件</h5><ul>
+<li><p><strong>/etc/passwd</strong></p>
+<p>  用户配置文件，每行记录对应一个用户，用户又被<code>:</code>分割为7个字段，格式和含义如下：</p>
+<p>  用户名:口令:用户标识号:组标识号:注释性描述:主目录:登录Shell</p>
+</li>
+<li><p><strong>/etc/shadow</strong></p>
+<p>  口令配置文件，格式和含义如下：</p>
+<p>  登录用户名:加密口令:最后一次修改时间:最小时间间隔:最大时间间隔:警告时间:不活动时间:失效时间:标志</p>
+</li>
+<li><p><strong>/etc/group</strong></p>
+<p>  组配置文件，记录了Linux中组的信息，格式和含义如下：</p>
+<p>  组名:口令:组标识号:组内用户列表</p>
+</li>
+</ul>
+<hr>
+<h2 id="配置环境"><a href="#配置环境" class="headerlink" title="配置环境"></a>配置环境</h2><p>常用的安装方式：rpm包、tar包、yum在线安装</p>
+<h3 id="yum"><a href="#yum" class="headerlink" title="yum"></a>yum</h3><p>yum的基本语法：yum [选项] [命令] [包 …]</p>
+<p>选项：</p>
+<p>-h 帮助信息</p>
+<p>-y 安装过程中的提示全部为yes</p>
+<p>-q 不显示安装过程</p>
+<p><strong>常用命令</strong></p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 列出所有可更新的软件清单</span></span><br><span class="line">yum check-update</span><br><span class="line"></span><br><span class="line"><span class="comment"># 更新所有软件</span></span><br><span class="line">yum update</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装指定软件，可以同时安装多个包，package_name为可变长参数</span></span><br><span class="line">yum install &lt;package_name...&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 仅更新指定软件</span></span><br><span class="line">yum update &lt;package_name...&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除软件</span></span><br><span class="line">yum remove &lt;package_name...&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查找软件包命令</span></span><br><span class="line">yum search &lt;keyword&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment">#清除缓存</span></span><br><span class="line">yum clean packages	<span class="comment"># 清除缓存目录下的软件包</span></span><br><span class="line">yum clean headers	<span class="comment"># 清除缓存目录下的headers</span></span><br><span class="line">yum clean oldheaders	<span class="comment"># 清除缓存目录下旧的headers</span></span><br><span class="line">yum clean all	<span class="comment"># 清除缓存目录下的软件包以及旧的headers</span></span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="JDK"><a href="#JDK" class="headerlink" title="JDK"></a>JDK</h3><p>安装jdk之前，需要检查系统中是否存在openjdk，如果存在需要先卸载openjdk再安装完整的jdk</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">rpm -qa | grep jdk <span class="comment"># 查看系统中是否存在已安装的jdk</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">rpm -qa | grep openjdk |xargs rpm -e --nodeps <span class="comment"># 批量卸载命令</span></span><br></pre></td></tr></table></figure>
+
+<p>使用rpm包安装，默认安装到/usr目录下</p>
+<p>usr：Unix Software Resource</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">rpm -ivh 包名 <span class="comment"># 使用rpm安装jdk</span></span><br></pre></td></tr></table></figure>
+
+<p><img src="https://gitee.com/graytang/img-repo/raw/master/img/202110181727354.png"></p>
+<p><strong>使用rpm或yum安装JDK无需配置环境变量</strong></p>
+<h3 id="开启对外端口"><a href="#开启对外端口" class="headerlink" title="开启对外端口"></a>开启对外端口</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 查看对外开放的端口</span></span><br><span class="line">firewall-cmd --list-ports</span><br><span class="line"></span><br><span class="line"><span class="comment"># 开启防火墙对外开放端口</span></span><br><span class="line">firewall-cmd --zone=public --add-port=端口号/传输层协议(tcp/udp) --permanent</span><br><span class="line"></span><br><span class="line"><span class="comment"># 重启防火墙服务</span></span><br><span class="line">systemctl restart firewalld.service</span><br><span class="line"></span><br><span class="line"><span class="comment"># 再次查看对外开放端口，确认端口开启成功</span></span><br><span class="line">firewall-cmd --list-ports</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="firewall防火墙常用命令"><a href="#firewall防火墙常用命令" class="headerlink" title="firewall防火墙常用命令"></a>firewall防火墙常用命令</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 查看firewall服务状态</span></span><br><span class="line">systemctl status firewalld</span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动、重启、停止firewalld.service服务</span></span><br><span class="line">service firewalld start</span><br><span class="line">service firewalld restart</span><br><span class="line">service firewalld stop</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看防火墙规则</span></span><br><span class="line">firewall-cmd --list-all		<span class="comment"># 查看全部信息</span></span><br><span class="line">firewall-cmd --list-ports	<span class="comment"># 只查看端口信息</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 开启端口</span></span><br><span class="line">firewall-cmd --zone=作用区域 -add-port=端口号/传输层通讯协议 --permanent	<span class="comment"># --permanent代表永久生效，不携带此参数则在重启后失效</span></span><br><span class="line"><span class="comment"># 开启端口后需要重启防火墙以生效</span></span><br><span class="line">systemctl restart firewalld.service</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看firewall的zone</span></span><br><span class="line">firewall-cmd --get-zones</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="项目部署"><a href="#项目部署" class="headerlink" title="项目部署"></a>项目部署</h3><p>将编译打包好的jar包上传到Linux中，一般会在/opt目录下建个文件夹放置项目；</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 启动项目，测试访问</span></span><br><span class="line">java -jar jar包</span><br><span class="line"></span><br><span class="line"><span class="comment"># 后台启动方式，&amp;代表在后台运行，在当前窗口关闭后程序会终止运行</span></span><br><span class="line">java -jar jar包 &amp;</span><br><span class="line"></span><br><span class="line"><span class="comment"># nohup命令可以让程序不挂断运行，当账户推出或终端关闭时，程序依然运行</span></span><br><span class="line"><span class="comment"># 默认情况下使用nohup命令，会将程序的所有输出写到项目当前目录的nohup.out文件中</span></span><br><span class="line">nohub java -jar jar包 &amp;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 指定输出位置，可以在jar包后面使用&#x27;&gt;&#x27;符号追加日志输出位置和文件名</span></span><br><span class="line">nohub java -jar jar包 &gt;outlog.txt &amp;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 如果不需要输出日志，可以使用如下命令</span></span><br><span class="line">nohub java -jar jar包 &gt;/dev/null &amp;</span><br></pre></td></tr></table></figure>
+
+
+
+<h3 id="Tomcat"><a href="#Tomcat" class="headerlink" title="Tomcat"></a>Tomcat</h3><p>将Tomcat的tar.gz包上传至Linux，解压；</p>
+<p>Tomcat的bin目录下的<code>startup.sh</code>和<code>shutdown.sh</code>用于启动和停止tomcat，sh文件是Linux中的可执行bash文件，类似Windows中的exe</p>
+<p><img src="https://gitee.com/graytang/img-repo/raw/master/img/202110181727146.png"></p>
+<p>启动tomcat，测试是否可以访问成功</p>
+<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 直接启动服务</span></span><br><span class="line">/usr/tomcat目录/bin/startup.sh</span><br><span class="line"></span><br><span class="line"><span class="comment"># sh命令启动，使用sh命令可以不需要文件具有可执行属性</span></span><br><span class="line">sh /usr/tomcat目录/bin/startup.sh</span><br><span class="line"></span><br><span class="line"><span class="comment"># 停止服务</span></span><br><span class="line">/usr/tomcat目录/bin/shutdown.sh</span><br><span class="line"></span><br><span class="line"><span class="comment"># sh停止服务</span></span><br><span class="line">sh /usr/tomcat目录/bin/shutdown.sh</span><br></pre></td></tr></table></figure>
+
+<p>访问成功，地址栏中的9000端口是因为配置了虚拟机到主机的端口映射</p>
+<p><img src="https://gitee.com/graytang/img-repo/raw/master/img/202110181728268.png"></p>
+]]></content>
+      <categories>
+        <category>学习笔记</category>
+        <category>Linux</category>
+      </categories>
+      <tags>
+        <tag>Linux</tag>
       </tags>
   </entry>
   <entry>
@@ -768,218 +980,6 @@
       <tags>
         <tag>MySQL</tag>
         <tag>MyBatis</tag>
-      </tags>
-  </entry>
-  <entry>
-    <title>Linux常用操作</title>
-    <url>/2021/10/18/Linux%E5%B8%B8%E7%94%A8%E6%93%8D%E4%BD%9C/</url>
-    <content><![CDATA[<h2 id="Vim"><a href="#Vim" class="headerlink" title="Vim"></a>Vim</h2><h3 id="Vim的常用模式"><a href="#Vim的常用模式" class="headerlink" title="Vim的常用模式"></a>Vim的常用模式</h3><p><strong>正常模式（命令模式）</strong></p>
-<p>使用vim打开一个文件，默认进入正常模式；正常模式中可以使用上下左右移动光标，可以对文件进行删除字符、删除整行、复制和粘贴等操作。</p>
-<p><strong>插入模式（输入模式）</strong></p>
-<p>按下<code>i</code>后进入插入模式，该模式下可以直接对文件进行编辑，可以使用<code>ESC</code>退回到正常模式。</p>
-<p><strong>命令行模式（底线命令模式）</strong></p>
-<p>在正常模式下输入<code>:</code>进入命令行模式，该模式下可以进行读取、保存、替换、退出vim、显示行号等操作。</p>
-<span id="more"></span>
-
-
-
-<h3 id="常用命令"><a href="#常用命令" class="headerlink" title="常用命令"></a>常用命令</h3><p>**==打开文件==**：在Linux终端中输入<code>vim f_name</code>，使用vim打开指定文件，默认为正常模式；</p>
-<p>**==退出vim==**：</p>
-<p><code>:wq</code> - 在命令行模式中输入wq，会写入（保存）文件并退出，可以单独使用<code>w</code>保存文件；</p>
-<p><code>:q</code> - 正常退出；</p>
-<p><code>:q!</code> - 强制退出，不会保存文件，<code>!</code>可以和<code>w</code>之类的命令配合使用；</p>
-<p>**==复制粘贴==**：</p>
-<p><strong>单行复制</strong> - 在正常模式中输入<code>yy</code>，拷贝当前光标所在行；</p>
-<p><strong>多行复制</strong> - 输入<code>rowNum+yy</code>，拷贝包括光标所在行的rowNum行；例如<code>3yy</code>，复制光标所在行和所在行的下方两行，共三行；</p>
-<p><strong>粘贴</strong> - 移动光标到需要粘贴的位置，输入<code>p</code>，完成粘贴；</p>
-<p>==<strong>删除</strong>==：</p>
-<p><strong>单行删除</strong> - 输入<code>dd</code>，删除当前光标所在行；</p>
-<p><strong>多行删除</strong> - <code>rowNum+dd</code>，和多行复制相同的逻辑；</p>
-<p>==<strong>查找关键字</strong>==：</p>
-<p><strong>顺序查找</strong></p>
-<p>在正常模式下输入<code>/</code>进入查找模式，输入对应关键词按下回车进行查找，在查找过程中按下<code>n</code>会匹配下一个，按下<code>N</code>即shift+n匹配上一个；</p>
-<p>重新输入<code>/</code>会清空当前关键字，重新输入关键字再次进行查找，按下退格键删除<code>/</code>退出查找；</p>
-<p>退出查找后，命令行模式输入<code>noh</code>可以取消查找关键字的高亮；</p>
-<p><strong>反向查找</strong> - 输入<code>?</code>进入反向查找，输入关键字并回车后，按下<code>n</code>会匹配上一个；</p>
-<p>==<strong>行号</strong>==：</p>
-<p><strong>显示行号</strong> - 在命令行模式输入<code>set nu</code>，开启行号显示；</p>
-<p><strong>取消显示</strong> - 输入<code>set nonu</code>，关闭行号显示；</p>
-<p>**==首尾行跳转==**：</p>
-<p>正常模式下输入<code>gg</code>使光标跳转到文件首行，输入<code>G</code>使光标跳转到文件尾行；</p>
-<p>**==撤销/重做==**：</p>
-<p><strong>撤销</strong> - 在正常模式下输入<code>u</code>可以撤销之前的动作；</p>
-<p><strong>重做</strong> - 撤销后再输入<code>Ctrl+r</code>可以恢复撤销的动作；</p>
-<p>**==快速跳转==**：在正常模式下，输入<code>rowNum</code>后，再输入<code>shift+g</code>，可以将光标快速移动到指定行；例如：5 -&gt; shift+g，快速跳转到第5行；</p>
-<p>**==翻页==**：</p>
-<p><code>Ctrl+u</code>：向前翻半页；</p>
-<p><code>Ctrl+d</code>：向后翻半页；</p>
-<p><code>Ctrl+b</code>：向前翻一页；</p>
-<p><code>Ctrl+f</code>：向后翻一页。</p>
-<p>其他：</p>
-<p><img src="https://gitee.com/graytang/img-repo/raw/master/img/202110181724867.gif"></p>
-<h2 id="Linux命令"><a href="#Linux命令" class="headerlink" title="Linux命令"></a>Linux命令</h2><h4 id="关机-amp-重启"><a href="#关机-amp-重启" class="headerlink" title="关机&amp;重启"></a>关机&amp;重启</h4><p><code>shutdown -h now</code>：立即关机，-h代表halt停止，now表示立即</p>
-<p><code>shutdown -h countdown</code>：指定倒计时后关机，countdown表示指定的倒计时，例如：<strong>shutdown -h 1</strong>，指定1分钟后关机；</p>
-<p>可以携带message，例如：**shutdown -h 1 “1分钟后关机”**，携带的message：”1分钟后关机”，会通知到当前所有登录到Linux终端的用户；</p>
-<p><code>shutdown</code>：等效于<strong>shutdown -h 1</strong>；</p>
-<p><code>shutdown -r now</code>：立即重启，-r代表reboot重新启动；</p>
-<p><code>halt</code>：等效于<strong>shutdown -h now</strong>；</p>
-<p><code>reboot</code>：等效于<strong>shutdown -r now</strong>；</p>
-<p><code>sync</code>：==将内存中的数据同步到磁盘，关机或重启前必须运行该命令，防止数据丢失==；</p>
-<h4 id="切换目录"><a href="#切换目录" class="headerlink" title="切换目录"></a>切换目录</h4><p>cd：change directory</p>
-<p><code>cd ..</code>：返回上一级目录</p>
-<p><code>cd ../..</code>：返回上两级目录</p>
-<p><code>cd或cd ~</code>：返回home目录</p>
-<p><code>cd 目录名</code>：切换指定目录</p>
-<h4 id="当前用户所在目录"><a href="#当前用户所在目录" class="headerlink" title="当前用户所在目录"></a>当前用户所在目录</h4><p>pwd：print work directory</p>
-<p><code>pwd</code>：使用该命令可以显示当前所在的目录的层级；</p>
-<h4 id="列出目录"><a href="#列出目录" class="headerlink" title="列出目录"></a>列出目录</h4><p><code>ls</code>：列出当前目录或指定目录下的文件</p>
-<p>-a 参数：all，查看所有文件，包括隐藏文件</p>
-<p>-l 参数：查看文件详细信息，包含属性和权限，如果想单独使用该参数可以将<code>ls</code>简写成<code>ll</code></p>
-<h4 id="创建文件"><a href="#创建文件" class="headerlink" title="创建文件"></a>创建文件</h4><p><code>touch 文件</code>：创建一个文件，默认在当前目录下创建，也可以在指定目录下创建，touch的另一个作用是更改一个文件或目录的时间</p>
-<h4 id="创建文件夹"><a href="#创建文件夹" class="headerlink" title="创建文件夹"></a>创建文件夹</h4><p>mkdir：make directory</p>
-<p><code>mkdir 文件夹名称</code>：在当前目录下创建一个文件夹</p>
-<p>-p 参数：创建层级目录，例如：mkdir -p test1/test2/test3</p>
-<h4 id="查看文件内容"><a href="#查看文件内容" class="headerlink" title="查看文件内容"></a>查看文件内容</h4><p><code>cat 文件名</code>：从第一行开始显示文件内容，用于读取代码或配置等含文本文件</p>
-<p><code>tac 文件名</code>：cat的倒置，从最后一行开始显示</p>
-<p><code>nl 文件名</code>：携带行号显示文件内容，会忽略空行的行号计数</p>
-<p><code>more 文件名</code>：分页显示文件内容，只能向后滚动，空格进入下一页，回车进入下一行，查看过程中使用命令<code>:f</code>可以显示当前页尾行行号，按q退出查看</p>
-<p><code>less 文件名</code>：作用和more类似，但是可以向前滚动，上下键可以前进或后退一行，也可以使用pageUp和pageDown键进行前后翻页，查看过程中可以使用<code>/关键字</code>匹配关键字进行向下查找，<code>?关键字</code>向上查找，使用方式和上下匹配的快捷键和vim一致</p>
-<p><code>head [选项] [行数] 文件名</code>：可以查看文件的头几行，不携带选项参数默认显示10行，可以通过<code>-n</code>参数+行数查看指定的头部几行</p>
-<p><code>tail [选项] [行数] 文件名</code>：查看文件尾部几行，使用方式和head一样</p>
-<h4 id="硬链接-软（符号）链接"><a href="#硬链接-软（符号）链接" class="headerlink" title="硬链接/软（符号）链接"></a>硬链接/软（符号）链接</h4><p>Linux下的链接文件有点类似于Windows中的快捷方式，但是有几点不同，分为硬链接和软链接；</p>
-<p><strong>硬链接</strong>：假设有个A文件，我们对其使用命令创建了一个硬链接B文件。</p>
-<p>对硬链接文件查看文件属性可以看到，硬链接的文件类型列的标识是<code>-</code>，也就是一个普通文件。</p>
-<p>由于硬链接是直接指向物理存储的数据块地址的，所以删除A文件，B文件依然可以读取出文件中原本的内容。</p>
-<p>作用在于允许一个文件拥有多个路径，用户可以通过这种机制对一些重要文件使用硬链接，防止误删。</p>
-<p><strong>软链接</strong>：软链接也称符号链接，就和Windows中的快捷方式完全一样，指向的是源文件，对其查看文件属性也可以看到文件类型列的标识是<code>l</code>，也就是一个单纯的链接文件，删除了源文件后软链接则无法进行访问。</p>
-<p><code>ln [选项] 源文件 链接文件</code>：该命令可以为文件创建链接，默认创建硬链接，使用<code>-s</code>选项参数可以创建软链接。</p>
-<h4 id="删除命令"><a href="#删除命令" class="headerlink" title="删除命令"></a>删除命令</h4><p><code>rm [选项] 文件或目录</code>：删除文件或目录，可以使用正则表达式</p>
-<p><img src="https://gitee.com/graytang/img-repo/raw/master/img/202110181726212.png"></p>
-<p>“rm -f” 强行删除，忽略不存在的文件，不提示确认。(f为force的意思)<br>“rm -i” 进行交互式删除，即删除时会提示确认。(i为interactive的意思)<br>“rm -r” 将参数中列出的全部目录和子目录进行递归删除。(r为recursive的意思)<br>“rm -v” 详细显示删除操作进行的步骤。(v为verbose的意思)</p>
-<h4 id="拷贝命令"><a href="#拷贝命令" class="headerlink" title="拷贝命令"></a>拷贝命令</h4><p><code>cp 拷贝文件 目标目录</code>：拷贝文件到目标目录中</p>
-<h4 id="移动-重命名文件"><a href="#移动-重命名文件" class="headerlink" title="移动/重命名文件"></a>移动/重命名文件</h4><p><code>mv [选项] 源文件... 目的地/</code>：移动文件到指定目录</p>
-<ul>
-<li><strong>-b</strong>: 当目标文件或目录存在时，在执行覆盖前，会为其创建一个备份。</li>
-<li><strong>-i</strong>: 如果指定移动的源目录或文件与目标的目录或文件同名，则会先询问是否覆盖旧文件，输入 y 表示直接覆盖，输入 n 表示取消该操作。</li>
-<li><strong>-f</strong>: 如果指定移动的源目录或文件与目标的目录或文件同名，不会询问，直接覆盖旧文件。</li>
-<li><strong>-n</strong>: 不要覆盖任何已存在的文件或目录。</li>
-<li><strong>-u</strong>：当源文件比目标文件新或者目标文件不存在时，才执行移动操作。</li>
-</ul>
-<p>mv命令可以在移动时修改文件名，例如：mv test.txt dir/test2.txt</p>
-<p>mv命令同样可以直接重命名文件，例如：mv test.txt test2.txt或mv dir dir2</p>
-<h4 id="换行"><a href="#换行" class="headerlink" title="换行"></a>换行</h4><p>Linux输入的参数过长时，可以在行尾使用<code>\</code>反斜杠+回车换行，代表下一行是续行。</p>
-<h4 id="解压"><a href="#解压" class="headerlink" title="解压"></a>解压</h4><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 直接在包所在的目录下解压</span></span><br><span class="line">tar -zxvf tar包名.tar.gz</span><br><span class="line"></span><br><span class="line"><span class="comment"># 解压至指定目录</span></span><br><span class="line">tar -zxvf tar包名.tar.gz -C 目录</span><br></pre></td></tr></table></figure>
-
-
-
-
-
-<h4 id="用户登录-amp-注销"><a href="#用户登录-amp-注销" class="headerlink" title="用户登录&amp;注销"></a>用户登录&amp;注销</h4><ol>
-<li>登录时尽量不要直接使用root帐号登录，因为它是系统管理员，最大的权限，避免操作失误。可以利用普通用户登录，登录后再用<code>su root</code>命令来切换成系统管理员身份。</li>
-<li>在终端下输入<code>logout</code>即可注销用户。</li>
-</ol>
-<p>注意：logout注销指令在图形运行级别无效，在运行级别3下有效。</p>
-<h4 id="运行级别"><a href="#运行级别" class="headerlink" title="运行级别"></a>运行级别</h4><blockquote>
-<p>0： 系统停机（关机）模式，系统默认运行级别不能设置为0，否则不能正常启动，一开机就自动关机。</p>
-<p>1：单用户模式，root权限，用于系统维护，禁止远程登陆，就像Windows下的安全模式登录。</p>
-<p>2：多用户模式，没有NFS网络支持。</p>
-<p>3：完整的多用户终端模式，有NFS，登陆后进入终端模式。</p>
-<p>4：系统未使用，保留一般不用，在一些特殊情况下可以用它来做一些事情。例如在笔记本电脑的电池用尽时，可以切换到这个模式来做一些设置。</p>
-<p>5：图形化模式，登陆后进入图形GUI模式或GNOME、KDE图形化界面，如X Window系统。</p>
-<p>6：重启模式，默认运行级别不能设为6，否则不能正常启动，就会一直开机重启开机重启。</p>
-</blockquote>
-<h4 id="指定运行级别"><a href="#指定运行级别" class="headerlink" title="指定运行级别"></a>指定运行级别</h4><p><code>init 运行级别</code>：使用该指令可以切换当前系统运行级别，该指令不会更改默认的运行级别；</p>
-<p><strong>设置默认运行级别</strong></p>
-<p>CentOS 7以后，将运行级别进行了简化：</p>
-<p>multi-user.target - 运行级别3</p>
-<p>graphical.target - 运行级别5</p>
-<p><code>systemctl get-default</code>：使用该指令可以获得当前系统默认运行级别；</p>
-<p><code>systemctl set-default TARGET.target</code>：使用该指令可以指定系统默认的运行级别，例如：<code>systemctl set-default multi-user.target</code>，将默认运行级别指定为3；</p>
-<h4 id="帮助指令"><a href="#帮助指令" class="headerlink" title="帮助指令"></a>帮助指令</h4><p><code>man 命令或配置文件</code>：使用该命令可以获得帮助信息，例如：<code>man ls</code>，可以获得ls指令的帮助信息；</p>
-<p><code>help 命令</code>：该指令可以获得shell内置命令的帮助信息；</p>
-<p>tip：命令帮助信息中显示的选项参数可以组合使用，例如：<code>ls -la</code>；</p>
-<h4 id="用户管理"><a href="#用户管理" class="headerlink" title="用户管理"></a>用户管理</h4><p>Linux系统是一个多用户多任务的分时操作系统，任何一个要使用系统资源的用户，都必须首先向系统管理员申请一个账号，然后以这个账号的身份进入系统。</p>
-<h5 id="添加用户"><a href="#添加用户" class="headerlink" title="添加用户"></a>添加用户</h5><p><code>useradd u_name</code>：使用该命令可以创建一个用户，创建用户后会默认在/home目录下生成一个用户文件夹，文件夹与username同名；</p>
-<p><code>useradd -d dir u_name</code>：-d代表在指定目录下生成用户文件夹，dir表示指定目录路径；</p>
-<h5 id="修改密码"><a href="#修改密码" class="headerlink" title="修改密码"></a>修改密码</h5><p><code>passwd u_name</code>：该命令可以修改指定用户的密码，如果不携带username参数，则默认为当前用户修改密码；</p>
-<h5 id="删除用户"><a href="#删除用户" class="headerlink" title="删除用户"></a>删除用户</h5><p><code>userdel u_name</code>：使用该命令可以删除指定用户，需要root权限，使用该命令删除用户时不会删除用户文件夹，需要同时删除用户文件夹需要加上参数<code>-r</code>，例如：<code>userdel -r u_name</code>，谨慎使用<code>-r</code>，一般情况下都建议保留用户文件夹；</p>
-<h5 id="查询用户信息"><a href="#查询用户信息" class="headerlink" title="查询用户信息"></a>查询用户信息</h5><p><code>id u_name</code>：该指令可以查询指定用户的id和group等信息；</p>
-<h5 id="切换用户"><a href="#切换用户" class="headerlink" title="切换用户"></a>切换用户</h5><p><code>su u_name</code>：该指令可以切换到指定的用户；</p>
-<p>注意：从权限高的用户切换到权限低的用户，不需要输入密码，相反则需要；当需要返回到之前的用户时，使用exit或logout指令；</p>
-<h5 id="查询首次登录用户"><a href="#查询首次登录用户" class="headerlink" title="查询首次登录用户"></a>查询首次登录用户</h5><p><code>whoami</code>：该指令可以查询我们首次登录系统时使用的是哪个用户；</p>
-<p><code>who am i</code>：作用同上，区别是会显示登录时间和使用哪个IP地址进行登录等信息；</p>
-<p><img src="https://gitee.com/graytang/img-repo/raw/master/img/202110181726779.png"></p>
-<h5 id="用户组"><a href="#用户组" class="headerlink" title="用户组"></a>用户组</h5><p>用户组类似于角色的概念，系统可以将拥有共性或相同权限的多个用户分配到一个组进行统一的管理</p>
-<p><code>groupadd g_name</code>：新增一个指定groupname的组；</p>
-<p><code>groupdel g_name</code>：删除一个指定的组；</p>
-<h5 id="添加用户时指定组"><a href="#添加用户时指定组" class="headerlink" title="添加用户时指定组"></a>添加用户时指定组</h5><p><code>useradd -g g_name u_name</code>：-g参数表示在添加用户时分配组；</p>
-<p>注意：添加用户时如果不分配组，默认会创建一个组名和用户名相同的组，并将用户分配到该组。</p>
-<h5 id="修改指定用户的组"><a href="#修改指定用户的组" class="headerlink" title="修改指定用户的组"></a>修改指定用户的组</h5><p><code>usermod -g g_name u_name</code>：usermod修改用户，携带-g参数时可以修改用户的组；</p>
-<h5 id="用户-组相关文件"><a href="#用户-组相关文件" class="headerlink" title="用户/组相关文件"></a>用户/组相关文件</h5><ul>
-<li><p><strong>/etc/passwd</strong></p>
-<p>  用户配置文件，每行记录对应一个用户，用户又被<code>:</code>分割为7个字段，格式和含义如下：</p>
-<p>  用户名:口令:用户标识号:组标识号:注释性描述:主目录:登录Shell</p>
-</li>
-<li><p><strong>/etc/shadow</strong></p>
-<p>  口令配置文件，格式和含义如下：</p>
-<p>  登录用户名:加密口令:最后一次修改时间:最小时间间隔:最大时间间隔:警告时间:不活动时间:失效时间:标志</p>
-</li>
-<li><p><strong>/etc/group</strong></p>
-<p>  组配置文件，记录了Linux中组的信息，格式和含义如下：</p>
-<p>  组名:口令:组标识号:组内用户列表</p>
-</li>
-</ul>
-<hr>
-<h2 id="配置环境"><a href="#配置环境" class="headerlink" title="配置环境"></a>配置环境</h2><p>常用的安装方式：rpm包、tar包、yum在线安装</p>
-<h3 id="yum"><a href="#yum" class="headerlink" title="yum"></a>yum</h3><p>yum的基本语法：yum [选项] [命令] [包 …]</p>
-<p>选项：</p>
-<p>-h 帮助信息</p>
-<p>-y 安装过程中的提示全部为yes</p>
-<p>-q 不显示安装过程</p>
-<p><strong>常用命令</strong></p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 列出所有可更新的软件清单</span></span><br><span class="line">yum check-update</span><br><span class="line"></span><br><span class="line"><span class="comment"># 更新所有软件</span></span><br><span class="line">yum update</span><br><span class="line"></span><br><span class="line"><span class="comment"># 安装指定软件，可以同时安装多个包，package_name为可变长参数</span></span><br><span class="line">yum install &lt;package_name...&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 仅更新指定软件</span></span><br><span class="line">yum update &lt;package_name...&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 删除软件</span></span><br><span class="line">yum remove &lt;package_name...&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查找软件包命令</span></span><br><span class="line">yum search &lt;keyword&gt;</span><br><span class="line"></span><br><span class="line"><span class="comment">#清除缓存</span></span><br><span class="line">yum clean packages	<span class="comment"># 清除缓存目录下的软件包</span></span><br><span class="line">yum clean headers	<span class="comment"># 清除缓存目录下的headers</span></span><br><span class="line">yum clean oldheaders	<span class="comment"># 清除缓存目录下旧的headers</span></span><br><span class="line">yum clean all	<span class="comment"># 清除缓存目录下的软件包以及旧的headers</span></span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="JDK"><a href="#JDK" class="headerlink" title="JDK"></a>JDK</h3><p>安装jdk之前，需要检查系统中是否存在openjdk，如果存在需要先卸载openjdk再安装完整的jdk</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">rpm -qa | grep jdk <span class="comment"># 查看系统中是否存在已安装的jdk</span></span><br></pre></td></tr></table></figure>
-
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">rpm -qa | grep openjdk |xargs rpm -e --nodeps <span class="comment"># 批量卸载命令</span></span><br></pre></td></tr></table></figure>
-
-<p>使用rpm包安装，默认安装到/usr目录下</p>
-<p>usr：Unix Software Resource</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line">rpm -ivh 包名 <span class="comment"># 使用rpm安装jdk</span></span><br></pre></td></tr></table></figure>
-
-<p><img src="https://gitee.com/graytang/img-repo/raw/master/img/202110181727354.png"></p>
-<p><strong>使用rpm或yum安装JDK无需配置环境变量</strong></p>
-<h3 id="开启对外端口"><a href="#开启对外端口" class="headerlink" title="开启对外端口"></a>开启对外端口</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 查看对外开放的端口</span></span><br><span class="line">firewall-cmd --list-ports</span><br><span class="line"></span><br><span class="line"><span class="comment"># 开启防火墙对外开放端口</span></span><br><span class="line">firewall-cmd --zone=public --add-port=端口号/传输层协议(tcp/udp) --permanent</span><br><span class="line"></span><br><span class="line"><span class="comment"># 重启防火墙服务</span></span><br><span class="line">systemctl restart firewalld.service</span><br><span class="line"></span><br><span class="line"><span class="comment"># 再次查看对外开放端口，确认端口开启成功</span></span><br><span class="line">firewall-cmd --list-ports</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="firewall防火墙常用命令"><a href="#firewall防火墙常用命令" class="headerlink" title="firewall防火墙常用命令"></a>firewall防火墙常用命令</h3><figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 查看firewall服务状态</span></span><br><span class="line">systemctl status firewalld</span><br><span class="line"></span><br><span class="line"><span class="comment"># 启动、重启、停止firewalld.service服务</span></span><br><span class="line">service firewalld start</span><br><span class="line">service firewalld restart</span><br><span class="line">service firewalld stop</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看防火墙规则</span></span><br><span class="line">firewall-cmd --list-all		<span class="comment"># 查看全部信息</span></span><br><span class="line">firewall-cmd --list-ports	<span class="comment"># 只查看端口信息</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 开启端口</span></span><br><span class="line">firewall-cmd --zone=作用区域 -add-port=端口号/传输层通讯协议 --permanent	<span class="comment"># --permanent代表永久生效，不携带此参数则在重启后失效</span></span><br><span class="line"><span class="comment"># 开启端口后需要重启防火墙以生效</span></span><br><span class="line">systemctl restart firewalld.service</span><br><span class="line"></span><br><span class="line"><span class="comment"># 查看firewall的zone</span></span><br><span class="line">firewall-cmd --get-zones</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="项目部署"><a href="#项目部署" class="headerlink" title="项目部署"></a>项目部署</h3><p>将编译打包好的jar包上传到Linux中，一般会在/opt目录下建个文件夹放置项目；</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 启动项目，测试访问</span></span><br><span class="line">java -jar jar包</span><br><span class="line"></span><br><span class="line"><span class="comment"># 后台启动方式，&amp;代表在后台运行，在当前窗口关闭后程序会终止运行</span></span><br><span class="line">java -jar jar包 &amp;</span><br><span class="line"></span><br><span class="line"><span class="comment"># nohup命令可以让程序不挂断运行，当账户推出或终端关闭时，程序依然运行</span></span><br><span class="line"><span class="comment"># 默认情况下使用nohup命令，会将程序的所有输出写到项目当前目录的nohup.out文件中</span></span><br><span class="line">nohub java -jar jar包 &amp;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 指定输出位置，可以在jar包后面使用&#x27;&gt;&#x27;符号追加日志输出位置和文件名</span></span><br><span class="line">nohub java -jar jar包 &gt;outlog.txt &amp;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 如果不需要输出日志，可以使用如下命令</span></span><br><span class="line">nohub java -jar jar包 &gt;/dev/null &amp;</span><br></pre></td></tr></table></figure>
-
-
-
-<h3 id="Tomcat"><a href="#Tomcat" class="headerlink" title="Tomcat"></a>Tomcat</h3><p>将Tomcat的tar.gz包上传至Linux，解压；</p>
-<p>Tomcat的bin目录下的<code>startup.sh</code>和<code>shutdown.sh</code>用于启动和停止tomcat，sh文件是Linux中的可执行bash文件，类似Windows中的exe</p>
-<p><img src="https://gitee.com/graytang/img-repo/raw/master/img/202110181727146.png"></p>
-<p>启动tomcat，测试是否可以访问成功</p>
-<figure class="highlight bash"><table><tr><td class="code"><pre><span class="line"><span class="comment"># 直接启动服务</span></span><br><span class="line">/usr/tomcat目录/bin/startup.sh</span><br><span class="line"></span><br><span class="line"><span class="comment"># sh命令启动，使用sh命令可以不需要文件具有可执行属性</span></span><br><span class="line">sh /usr/tomcat目录/bin/startup.sh</span><br><span class="line"></span><br><span class="line"><span class="comment"># 停止服务</span></span><br><span class="line">/usr/tomcat目录/bin/shutdown.sh</span><br><span class="line"></span><br><span class="line"><span class="comment"># sh停止服务</span></span><br><span class="line">sh /usr/tomcat目录/bin/shutdown.sh</span><br></pre></td></tr></table></figure>
-
-<p>访问成功，地址栏中的9000端口是因为配置了虚拟机到主机的端口映射</p>
-<p><img src="https://gitee.com/graytang/img-repo/raw/master/img/202110181728268.png"></p>
-]]></content>
-      <categories>
-        <category>学习笔记</category>
-        <category>Linux</category>
-      </categories>
-      <tags>
-        <tag>Linux</tag>
       </tags>
   </entry>
   <entry>
